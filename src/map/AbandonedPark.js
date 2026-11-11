@@ -103,26 +103,30 @@
         P.emergency(b, TX, 2.8, TZ - 5.85, 0, { mode: 'strobe' }); P.emergency(b, TX - 6.85, 2.8, TZ + 1, Math.PI / 2, { mode: 'pulse' });
         P.bottles(b, TX + 5, TZ - 2, 0);
         // ---------------- equipamentos urbanos ----------------
-        [[-48, 52], [-70, 62], [-88, 60], [-60, 25], [-80, 12], [-46, 22], [-100, 48], [-108, 20], [-52, -14]].forEach(([x, z], i) => P.lampPost(b, x, z, { mode: i % 3 === 0 ? 'flicker' : 'steady', broken: i % 3 === 1, intensity: 1.2, lean: i === 5 ? 0.15 : 0, needsPower: i % 3 === 2, group: 'parque' }));
+        [[-48, 52], [-70, 62], [-88, 60], [-60, 25], [-73, 24], [-46, 22], [-100, 48], [-108, 20], [-52, -14]].forEach(([x, z], i) => P.lampPost(b, x, z, { mode: i % 3 === 0 ? 'flicker' : 'steady', broken: i % 3 === 1, intensity: 1.2, lean: i === 5 ? 0.15 : 0, needsPower: i % 3 === 2, group: 'parque' }));
         [[-45, 46, 2.4], [-66, 60, 0.2], [-84, 52, 1.6], [-56, 22, -0.5], [-74, 0, 0.6]].forEach(([x, z, y]) => P.bench(b, x, z, y, { park: true }));
         OE.Hiding.under('bench', -66, 60, 0.2 + Math.PI, 0, 0.42, { depth: 0.25, exposure: 0.55, camOff: 0 });
         [[-47, 49], [-80, 66], [-58, 30]].forEach(([x, z]) => P.trashBin(b, x, z, 0)); P.trashBin(b, -95, 63, 0.4, { big: true }); P.trashBin(b, -68, 38, -0.2, { big: true });
-        P.dumpster(b, -112, 60, 0.3);
+        P.dumpster(b, -121.5, 48, Math.PI / 2);
         // trailer e carro abandonados
-        P.truck(b, -112, 80, 0.3, { box: M.woodGreen }); P.car(b, -44, -18, 2.1, { mat: M.metalRed, vines: true }); P.car(b, -118, 2, 1.4, { mat: M.metalGray, vines: true });
+        P.truck(b, -66, -24, 0, { box: M.woodGreen }); P.car(b, -44, -18, 2.1, { mat: M.metalRed, vines: true }); P.car(b, -118, 2, 1.4, { mat: M.metalGray, vines: true });
         // cercas baixas
         A.woodFence(b, [-36, -26], [-36, 30], { gaps: [6, 7], broken: 0.3 }); A.woodFence(b, [-36, 36], [-36, 96], { gaps: [3], broken: 0.3 });
         P.bottles(b, -63, 30, 0); P.bottles(b, -96, 22, 0);
         // vegetação
+        // áreas dos brinquedos modelados no MiniBlender (assets/models/brinquedos): sem árvore nem mato dentro
+        const RIDES = [[-111, 73, 9, 19], [-48, 86, 8, 5.5], [-80, 86, 8.5, 8.5], [-86, -14, 8, 8], [-116, 16, 5, 5], [-82, 14, 7.5, 7.5], [-64, 42, 4, 9.5]];
+        const inRide = (x, z) => RIDES.some(([cx, cz, hx, hz]) => Math.abs(x - cx) < hx && Math.abs(z - cz) < hz);
+        def._inRide = inRide;
         def._grass = [[-124, -28, -112, 96], [-110, 80, -40, 96], [-56, -28, -38, -2], [-110, -28, -96, -16], [-86, 14, -74, 30], [-120, 40, -104, 60], [-50, 70, -38, 96], [-70, 30, -56, 44]];
         const trees = []; const tr = OE.rng(77);
-        for (let i = 0; i < 46; i++) { const x = -122 + tr() * 84, z = -26 + tr() * 120; if (Math.hypot(x - WX, z - WZ) < 15 || Math.hypot(x - CX, z - CZ) < 11 || (x > -112 && x < -94 && z > -16 && z < 0) || (x > -86 && x < -70 && z > 38 && z < 54) || (z > 56 && z < 75 && x > -96 && x < -38) || (x > -40)) continue; trees.push([x, z, 0.8 + tr() * 0.6, tr() - 0.5]); }
+        for (let i = 0; i < 46; i++) { const x = -122 + tr() * 84, z = -26 + tr() * 120; if (inRide(x, z) || Math.hypot(x - WX, z - WZ) < 15 || Math.hypot(x - CX, z - CZ) < 11 || (x > -112 && x < -94 && z > -16 && z < 0) || (x > -86 && x < -70 && z > 38 && z < 54) || (z > 56 && z < 75 && x > -96 && x < -38) || (x > -40)) continue; trees.push([x, z, 0.8 + tr() * 0.6, tr() - 0.5]); }
         def._trees = trees;
         Map.cp('Parque', -45, 0, 40, Math.PI / 2, 4);
         for (let a = 0; a < 8; a++) { const th = a / 8 * Math.PI * 2; Map.cand(CX + Math.cos(th) * 9.5, 0, CZ + Math.sin(th) * 9.5); }
         Map.cand(TX - 5, 0, TZ + 4.5); Map.cand(TX - 5, 0, TZ - 4); Map.cand(TX, 0, TZ - 4); Map.cand(TX + 5, 0, TZ - 4); Map.cand(TX + 5, 0, TZ + 4.5);
       },
-      after(def) { OE.Veg.grass(def, def._grass, 1.6); OE.Veg.trees(def, def._trees, { leaves: true }); },
+      after(def) { OE.Veg.grass(def, def._grass, 1.6, def._inRide); OE.Veg.trees(def, def._trees, { leaves: true }); },
       detail(b) { const P = OE.Props, r = b.r; P.papers(b, -60, 50, 10); P.debris(b, -98, 30, 4); P.planks(b, -70, 66, 4); for (let i = 0; i < 40; i++) b.box(OE.MAT.leaves, -120 + r() * 80, 0.01, -25 + r() * 115, 0.7, 0.01, 0.7, { yaw: r() * 6, col: false, lod: 'clutter', grime: false }); }
     });
   };

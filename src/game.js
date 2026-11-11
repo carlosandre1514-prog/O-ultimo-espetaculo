@@ -41,6 +41,8 @@
       await OE.Sectors.buildAll(this.scene, this.world, async (k, name) => { progress(0.1 + k * 0.7, 'Construindo: ' + name); await frame(); });
       OE.Lights.finalize();
       await OE.Models.placeProps();
+      // pontos de navegação que ficaram dentro dos objetos/brinquedos externos saem do grafo
+      OE.Nav.nodes = OE.Nav.nodes.filter(n => n.links.length || !this.world.overlaps(n.x, n.z, 0.4, n.y + 0.35, n.y + 1.9)); OE.Nav.nodes.forEach((n, i) => { n.id = i; });
       progress(0.82, 'Calculando rotas do inimigo'); await frame();
       OE.Nav.build();
       progress(0.9, 'Ele está acordando'); await frame();
