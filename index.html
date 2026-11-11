@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>O Último Espetáculo</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:#000;color:#e8dcc4;font:14px/1.35 Georgia,'Times New Roman',serif;overflow:hidden;overscroll-behavior:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at center,#1a0606 0%,#000 70%);z-index:20;transition:opacity 1.2s}
+#splash.off{opacity:0;pointer-events:none}
+#splash h1{margin:0;font-size:clamp(30px,7vw,64px);letter-spacing:3px;color:#c8a860;text-shadow:0 0 18px #6a0a0a;text-align:center}
+#splash h2{margin:0;font-weight:normal;font-size:14px;color:#8a7a60;letter-spacing:4px;text-transform:uppercase}
+#barW{width:min(340px,70vw);height:3px;background:#2a1a1a}#bar{height:100%;background:#a02020;transform-origin:left;transform:scaleX(0);transition:transform .2s}
+#loadSt{color:#8a7a60;font-size:13px;min-height:18px}
+#start{display:none;background:none;border:1px solid #7a2020;color:#e8c890;font:16px Georgia,serif;padding:12px 34px;letter-spacing:3px;cursor:pointer}
+#start.on{display:block}
+#help{color:#6a5e4a;font-size:12px;text-align:center;max-width:520px;padding:0 16px}
+#cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:rgba(230,220,200,.55);z-index:5;pointer-events:none}
+#prompt{position:fixed;left:50%;top:58%;transform:translateX(-50%);padding:6px 14px;background:rgba(0,0,0,.55);border:1px solid rgba(200,170,110,.35);color:#e8d8b0;opacity:0;transition:opacity .15s;z-index:6;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#prompt.on{opacity:1}
+#msg{position:fixed;left:50%;bottom:16%;transform:translateX(-50%);color:#d8c8a0;text-shadow:0 0 6px #000;opacity:0;transition:opacity .5s;z-index:6;text-align:center;width:min(92vw,620px);pointer-events:none;font-style:italic}
+#msg.on{opacity:1}
+#inv{position:fixed;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:4px;z-index:6;pointer-events:none}
+#inv span{background:rgba(0,0,0,.5);border:1px solid #3a2a1a;padding:3px 8px;font-size:12px;color:#c8b088}
+#stamW{position:fixed;left:50%;bottom:6%;width:140px;margin-left:-70px;height:2px;background:rgba(255,255,255,.08);opacity:0;transition:opacity .4s;z-index:6}
+#stamW.on{opacity:1}#stam{height:100%;background:rgba(220,200,160,.6);transform-origin:center}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:8;transition:opacity .1s}
+#debug{position:fixed;left:8px;top:8px;white-space:pre;font:11px/1.4 monospace;color:#7f7;background:rgba(0,0,0,.6);padding:6px 8px;display:none;z-index:9;pointer-events:none}
+#debug.on{display:block}
+#note{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);z-index:12}
+#note.on{display:flex}
+#note div{background:#d8ccb0;color:#2a1a10;padding:26px 30px;max-width:min(520px,88vw);box-shadow:0 0 40px #000;font-size:15px;white-space:pre-wrap;transform:rotate(-1deg)}
+#note b{display:block;margin-bottom:10px;font-size:17px}
+/* esconderijos: o que se vê por dentro */
+#hideV{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .6s}
+body.hid-v #hideV{opacity:1;background:linear-gradient(90deg,#000 0,#000 44%,rgba(0,0,0,.25) 48.5%,rgba(0,0,0,.25) 51.5%,#000 56%,#000 100%)}
+body.hid-h #hideV{opacity:1;background:radial-gradient(ellipse at center,transparent 25%,#000 70%),repeating-linear-gradient(180deg,#000 0,#000 14px,rgba(0,0,0,.2) 14px,rgba(0,0,0,.2) 22px)}
+body.hid-gap #hideV{opacity:1;background:linear-gradient(180deg,#000 0,#000 40%,rgba(0,0,0,.2) 46%,rgba(0,0,0,.2) 56%,#000 64%,#000 100%)}
+body.hid-low #hideV{opacity:1;background:radial-gradient(ellipse 80% 40% at 50% 60%,transparent 30%,rgba(0,0,0,.92) 80%)}
+body.hid-none #hideV{opacity:1;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.85) 85%)}
+/* controles de toque */
+.tb{display:none}
+body.touch .tb{display:flex}
+#stick{position:fixed;width:140px;height:140px;border-radius:50%;border:1px solid rgba(220,200,160,.18);background:rgba(0,0,0,.15);pointer-events:none;z-index:6;opacity:0;transition:opacity .2s}
+#stick.on{opacity:1}
+#knob{position:absolute;left:45px;top:45px;width:50px;height:50px;border-radius:50%;background:rgba(220,200,160,.25)}
+#btns{position:fixed;right:calc(14px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));flex-direction:column;gap:12px;z-index:7;align-items:flex-end}
+#btns .row{display:flex;gap:12px}
+#btns button{width:62px;height:62px;border-radius:50%;border:1px solid rgba(220,200,160,.3);background:rgba(10,6,4,.45);color:#e0d0a8;font-size:22px;touch-action:none}
+#btns button.on{border-color:#c8a050;background:rgba(80,40,10,.5)}
+#bAct{opacity:.3}#bAct.on{opacity:1;border-color:#e8c890}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hideV"></div>
+<div id="cross"></div>
+<div id="prompt"></div>
+<div id="msg"></div>
+<div id="inv"></div>
+<div id="stamW"><div id="stam"></div></div>
+<div id="fade"></div>
+<div id="debug"></div>
+<div id="note"><div><b id="noteT"></b><span id="noteB"></span></div></div>
+<div id="stick"><div id="knob"></div></div>
+<div id="btns" class="tb">
+  <div class="row"><button data-act="light" title="Lanterna">🔦</button><button data-act="run" title="Correr">🏃</button></div>
+  <div class="row"><button data-act="crouch" title="Agachar">⤓</button><button id="bAct" data-act="interact" title="Interagir">✋</button></div>
+</div>
+<div id="splash">
+  <h2>Gran Circo Estrela · 1987</h2>
+  <h1>O Último Espetáculo</h1>
+  <div id="barW"><div id="bar"></div></div>
+  <div id="loadSt">Carregando…</div>
+  <button id="start">ENTRAR</button>
+  <div id="help">PC: WASD andar · mouse olhar · Shift correr · C agachar · E interagir/esconder · F lanterna · F3 desempenho · V espectador<br>Celular: lado esquerdo anda, lado direito olha, botões à direita.</div>
+</div>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="src/engine/core.js"></script>
+<script src="src/engine/textures.js"></script>
+<script src="src/engine/builder.js"></script>
+<script src="src/engine/collision.js"></script>
+<script src="src/engine/input.js"></script>
+<script src="src/engine/audio.js"></script>
+<script src="src/engine/player.js"></script>
+<script src="src/engine/interact.js"></script>
+<script src="src/engine/hiding.js"></script>
+<script src="src/engine/lighting.js"></script>
+<script src="src/engine/nav.js"></script>
+<script src="src/engine/enemy.js"></script>
+<script src="src/engine/sectors.js"></script>
+<script src="src/engine/models.js"></script>
+<script src="src/map/arch.js"></script>
+<script src="src/map/props.js"></script>
+<script src="src/map/map.js"></script>
+<script src="src/map/CircusEntrance.js"></script>
+<script src="src/map/MainCircusTent.js"></script>
+<script src="src/map/Backstage.js"></script>
+<script src="src/map/Dormitories.js"></script>
+<script src="src/map/Warehouse.js"></script>
+<script src="src/map/AnimalArea.js"></script>
+<script src="src/map/AbandonedPark.js"></script>
+<script src="src/map/Underground.js"></script>
+<script src="src/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+import { serve, open } from './smoke.mjs';
+const srv = await serve(8129); const { browser, page } = await open(8129, 960, 540);
+const pos = JSON.parse(process.argv[2] || '[0,0,-49.2,1.57]');
+const r = await page.evaluate((pos) => { const G = OE.game, P = G.player; G.enemyOff = true; P.teleport(...pos); for (let i = 0; i < 3; i++) G.update(0.016); G.camera.updateMatrixWorld();
+  const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(G.camera.projectionMatrix, G.camera.matrixWorldInverse));
+  const by = {}; G.scene.traverseVisible(o => { if (!(o.isMesh || o.isPoints || o.isSprite)) return; if (o.frustumCulled && o.geometry && o.geometry.boundingSphere && !fr.intersectsObject(o)) return;
+    let s = o, top = null; while (s.parent && s.parent !== G.scene) s = s.parent; const kind = o.isSprite ? 'sprite' : o.isInstancedMesh ? 'inst' : (s.name.endsWith('-dyn') ? 'dyn' : 'static');
+    const k = kind + ':' + (kind === 'static' ? s.name + ':' + (o.material.name || '') : (o.material.name || '')); by[k] = (by[k] || 0) + 1; });
+  G.renderer.render(G.scene, G.camera); return { calls: G.renderer.info.render.calls, by: Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 40) }; }, pos);
+console.log(JSON.stringify(r)); await browser.close(); srv.close();
