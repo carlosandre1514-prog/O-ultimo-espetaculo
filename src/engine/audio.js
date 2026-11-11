@@ -66,6 +66,14 @@
       const g = out(null, 1); [55, 58.3, 82.4].forEach(fr => { const o = ctx.createOscillator(), e = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = fr * 2; env(e, 0.05, 2.5, 0.08 * v); o.connect(e); e.connect(g); o.start(t); o.stop(t + 2.6); });
     } else if (name === 'heart') {
       const g = out(null, 1); [0, 0.22].forEach(dt => { const o = ctx.createOscillator(), e = ctx.createGain(); o.frequency.value = 52; e.gain.setValueAtTime(0, t + dt); e.gain.linearRampToValueAtTime(0.5 * v, t + dt + 0.02); e.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.18); o.connect(e); e.connect(g); o.start(t + dt); o.stop(t + dt + 0.2); });
+    } else if (name === 'crack') {        // pescoço quebrando
+      const g = out(null, 1); [0, 0.03, 0.07].forEach((dt, i) => { const s = noise(), f = ctx.createBiquadFilter(), e = ctx.createGain(); f.type = 'highpass'; f.frequency.value = 1400 + i * 600;
+        e.gain.setValueAtTime(0, t + dt); e.gain.linearRampToValueAtTime(0.9 * v, t + dt + 0.003); e.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.06); s.connect(f); f.connect(e); e.connect(g); s.start(t + dt, Math.random()); s.stop(t + dt + 0.1); });
+      const o = ctx.createOscillator(), e2 = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.2); env(e2, 0.002, 0.25, 0.6 * v); o.connect(e2); e2.connect(g); o.start(t); o.stop(t + 0.3);
+    } else if (name === 'stab') {         // facada: impacto úmido
+      const s = noise(), f = ctx.createBiquadFilter(), e = ctx.createGain(); f.type = 'lowpass'; f.frequency.value = 700; f.Q.value = 3;
+      env(e, 0.004, 0.22, 0.9 * v); s.connect(f); f.connect(e); e.connect(out(pos, 1)); s.start(t, Math.random()); s.stop(t + 0.3);
+      const o = ctx.createOscillator(), e2 = ctx.createGain(); o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.15); env(e2, 0.003, 0.18, 0.5 * v); o.connect(e2); e2.connect(out(pos, 1)); o.start(t); o.stop(t + 0.25);
     } else if (name === 'breath') {
       const s = noise(), f = ctx.createBiquadFilter(), e = ctx.createGain(); f.type = 'bandpass'; f.frequency.value = 600; f.Q.value = 0.8;
       e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.05 * v, t + 0.7); e.gain.linearRampToValueAtTime(0, t + 1.6); s.connect(f); f.connect(e); e.connect(out(null, 1)); s.start(t); s.stop(t + 1.7);

@@ -22,21 +22,21 @@
       // nível de gráfico (Suave/Padrão/Alto): antisserrilhado e densidade de pixels fixos, escolhidos na carga
       this.renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: OE.Q.aa, powerPreference: 'high-performance' });
       this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, OE.Q.dpr));
-      this.renderer.setSize(innerWidth, innerHeight);
+      this.renderer.setSize(OE.view.w, OE.view.h);
       this.renderer.outputEncoding = THREE.sRGBEncoding; this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.15;
       this.scene = OE.scene = new THREE.Scene();
       // a neblina apaga tudo além de ~90 m: o plano distante corta antes de desenhar
-      this.camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, OE.Q.far); this.scene.add(this.camera);
+      this.camera = new THREE.PerspectiveCamera(70, OE.view.w / OE.view.h, 0.05, OE.Q.far); this.scene.add(this.camera);
       this.world = OE.world = new OE.CollisionWorld();
       this.player = new OE.Player(this.camera, this.world);
       this.running = false; this.paused = false; this.flashOn = false; this.checkpoint = null; this.dying = false;
-      addEventListener('resize', () => { this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.renderer.setSize(innerWidth, innerHeight); });
+      OE.on('viewResize', v => { this.camera.aspect = v.w / v.h; this.camera.updateProjectionMatrix(); this.renderer.setSize(v.w, v.h); });
       OE.game = this;
     }
     async load(progress) {
       progress(0.02, 'Pintando texturas');
       await frame(); OE.buildMaterials(this.renderer);
-      OE.Lights.init(this.scene, this.camera);
+      OE.Lights.init(this.scene, this.camera); OE.Mirrors.init(this.scene, this.renderer);
       progress(0.1, 'Construindo o complexo');
       OE.Map.define();
       await OE.Sectors.buildAll(this.scene, this.world, async (k, name) => { progress(0.1 + k * 0.7, 'Construindo: ' + name); await frame(); });
@@ -48,6 +48,7 @@
       OE.Nav.build();
       progress(0.9, 'Ele está acordando'); await frame();
       this.enemy = new OE.Enemy(this.scene); await this.enemy.load();
+      progress(0.95, 'Preparando seu personagem'); await this.setCharacter(OE.charId());
       const far = OE.Nav.nodes.find(n => n.tag === 'enemyStart') || OE.Nav.nodes[0]; this.enemy.place(far);
       const cp = OE.checkpoints[0]; this.setCheckpoint(cp, true); this.player.teleport(cp.x, cp.y, cp.z, cp.yaw);
       this.updatables = new Set(); OE.Interact.list.forEach(o => o.update && this.updatables.add(o)); OE.doors.forEach(d => this.updatables.add(d));
@@ -63,11 +64,46 @@
       this.last = performance.now(); requestAnimationFrame(t => this.loop(t));
       UI.msg('O portão está acorrentado. Procure outro caminho para entrar.', 5);
     }
+    async setCharacter(id) {
+      try { const c = await OE.Models.loadCharacter(id); if (c) { OE.Avatar.set(c.obj, c.mixer, c.actions); this.character = c.info; } } catch (e) { console.warn('personagem', e); }
+    }
+    setPause(on) {
+      this.paused = on; $('pause').classList.toggle('on', on);
+      if (on && document.pointerLockElement) document.exitPointerLock();
+    }
     setCheckpoint(cp, silent) { if (this.checkpoint === cp) return; this.checkpoint = cp; if (!silent) UI.msg('Checkpoint: ' + cp.name, 2.5); }
+    // Morte: agarra pelo pescoço e levanta, quebra o pescoço, joga no chão e esfaqueia.
     caught() {
-      if (this.dying) return; this.dying = true; const P = this.player; P.control = false;
+      if (this.dying) return; this.dying = true; const P = this.player, E = this.enemy; P.control = false;
       if (P.hidden) OE.Hiding.forceOut();
-      this.deathT = 0; OE.Audio.play('sting', null, 1);
+      this.deathT = 0; this.deathPhase = 0; OE.Audio.play('sting', null, 1);
+      // palhaço de frente, a 0,75 m
+      const dx = P.pos.x - E.pos.x, dz = P.pos.z - E.pos.z, d = Math.hypot(dx, dz) || 1;
+      E.pos.set(P.pos.x - dx / d * 1.05, P.pos.y, P.pos.z - dz / d * 1.05); E.yaw = Math.atan2(dx, dz);
+      this.grabDur = Math.max(1.6, E.playOnce('grab') || 1.8); this.camFrom = { y: P.eyeY || P.pos.y + 1.6 };
+    }
+    deathUpdate(dt) {
+      const P = this.player, E = this.enemy, t = (this.deathT += dt), G = this.grabDur, cam = this.camera;
+      E.animate(dt, 0); E.group.position.set(E.pos.x, E.pos.y, E.pos.z); E.group.rotation.set(0, E.yaw, 0);
+      const toE = Math.atan2(-(E.pos.x - P.pos.x), -(E.pos.z - P.pos.z)), face = () => { let d = toE - P.yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; P.yaw += d * Math.min(1, dt * 8); };
+      const shake = a => (Math.random() - 0.5) * a, blood = $('blood');
+      if (t < G * 0.55) {                       // agarrado e levantado pelo pescoço
+        face(); const k = Math.min(1, t / (G * 0.35)); cam.position.set(P.pos.x + shake(0.03), P.pos.y + 1.6 + 0.35 * k + shake(0.03), P.pos.z + shake(0.03));
+        cam.rotation.set(0.25 * k + shake(0.04), P.yaw, shake(0.06), 'YXZ'); blood.style.opacity = 0.15 * k;
+      } else if (t < G) {                       // pescoço quebrado e jogado no chão
+        if (this.deathPhase === 0) { this.deathPhase = 1; OE.Audio.play('crack', null, 1); blood.style.opacity = 0.6; }
+        const k = OE.smooth(Math.min(1, (t - G * 0.55) / (G * 0.45))); cam.position.set(P.pos.x, P.pos.y + OE.lerp(1.95, 0.22, k), P.pos.z);
+        cam.rotation.set(OE.lerp(0.25, 0.9, k), P.yaw + 0.4 * k, OE.lerp(0, 1.25, k), 'YXZ'); blood.style.opacity = OE.lerp(0.6, 0.3, k);
+      } else if (t < G + 3.4) {                 // no chão: facadas
+        if (this.deathPhase === 1) { this.deathPhase = 2; this.stabDur = E.playOnce('stab') || 0.9; this.nextStab = t + 0.35;
+          // fica de pé sobre a vítima
+          const fx = Math.sin(E.yaw), fz = Math.cos(E.yaw); E.pos.set(P.pos.x - fx * 0.55, P.pos.y, P.pos.z - fz * 0.55); }
+        if (t > this.nextStab) { this.nextStab = t + (this.stabDur || 0.9); OE.Audio.play('stab', null, 1); blood.style.opacity = 0.75; cam.position.y = P.pos.y + 0.2 + shake(0.04); }
+        blood.style.opacity = Math.max(0.3, (+blood.style.opacity || 0) - dt * 1.2);
+        // deitado, olhando para cima, para o palhaço
+        cam.position.set(P.pos.x, P.pos.y + 0.22, P.pos.z); cam.rotation.set(0.75 + shake(0.015), toE, 0.3, 'YXZ');
+        UI.fade(OE.clamp((t - G - 2.4) / 1.0, 0, 1));
+      } else { blood.style.opacity = 0; E.stopOnce(); this.respawn(); }
     }
     respawn() {
       const P = this.player, cp = this.checkpoint;
@@ -93,7 +129,9 @@
       if (I.pressed('light')) { this.flashOn = !this.flashOn; OE.Lights.setFlash(this.flashOn); OE.Audio.play('click', null, 0.4); }
       if (I.pressed('debug')) $('debug').classList.toggle('on');
       if (I.pressed('debugMap')) this.mapView = !this.mapView;
-      if (this.dying) {
+      if (I.pressed('pause')) this.setPause(true);
+      if (this.dying && this.enemy.actions && this.enemy.actions.grab) { this.deathUpdate(dt); }
+      else if (this.dying) {
         this.deathT += dt; const E = this.enemy;
         // vira para o rosto dele, escurece e volta ao checkpoint
         const a = Math.atan2(-(E.pos.x - P.pos.x), -(E.pos.z - P.pos.z)); let d = a - P.yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
@@ -111,6 +149,7 @@
       for (const t of OE.noiseTraps) t.update(dt, P);
       if (this.enemy && !this.dying && !this.enemyOff) this.enemy.update(dt);
       OE.Lights.update(dt, this.camera, P.spectator ? this.camera.position : P.pos);
+      P.flashOn = this.flashOn; OE.Lights.updateTorch(dt, P); OE.Avatar.update(dt, P); OE.Mirrors.update(this.camera);
       OE.Sectors.update(this.camera, this.mapView);
       OE.Audio.listener(this.camera);
       $('stam').style.transform = 'scaleX(' + P.stamina.toFixed(3) + ')'; $('stamW').classList.toggle('on', P.stamina < 0.98);
@@ -137,6 +176,15 @@
   // ---------------- Boot ----------------
   addEventListener('load', async () => {
     OE.Input.init($('cv'));
+    // escolha de personagem (cartões com foto)
+    OE.Models.loadManifest().then(m => {
+      const list = (m && m.characters) || []; if (!list.length) return; const box = $('chars'); box.classList.add('on');
+      list.forEach(c => { const b = document.createElement('button'); b.className = 'char'; b.dataset.id = c.id;
+        b.innerHTML = '<img alt="" src="' + OE.asset(c.foto) + '"><b>' + c.nome + '</b><small>' + c.idade + ' anos</small><span>' + c.desc + '</span>';
+        b.addEventListener('click', () => { try { localStorage.setItem('oe.char', c.id); } catch (e) {} document.querySelectorAll('.char').forEach(x => x.classList.toggle('on', x === b)); if (OE.ready) g.setCharacter(c.id); });
+        box.appendChild(b); });
+      const cur = OE.charId(); document.querySelectorAll('.char').forEach(x => x.classList.toggle('on', x.dataset.id === cur));
+    });
     // seletor de gráficos da tela inicial (nível muda na próxima carga; FPS muda na hora)
     const mark = () => document.querySelectorAll('#gfx button').forEach(b => b.classList.toggle('on', b.dataset.q === OE.Q.name || +b.dataset.f === OE.Q.fps));
     document.querySelectorAll('#gfx button').forEach(b => b.addEventListener('click', () => {
@@ -144,6 +192,7 @@
       if (b.dataset.q !== OE.Q.name) { OE.saveQuality(b.dataset.q, OE.Q.fps); location.reload(); }
     }));
     mark();
+    $('gfx2').appendChild($('gfx').cloneNode(true)).id = 'gfx3'; document.querySelectorAll('#gfx3 button').forEach(b => b.addEventListener('click', () => { if (b.dataset.f) { OE.Q.fps = +b.dataset.f; OE.saveQuality(OE.Q.name, OE.Q.fps); document.querySelectorAll('#gfx3 button,#gfx button').forEach(x => x.classList.toggle('on', x.dataset.q === OE.Q.name || +x.dataset.f === OE.Q.fps)); } else if (b.dataset.q !== OE.Q.name) { OE.saveQuality(b.dataset.q, OE.Q.fps); location.reload(); } }));
     const g = new Game(), bar = $('bar'), st = $('loadSt');
     try {
       if (window.OE_ASSETS_READY) { st.textContent = 'Baixando modelos'; await window.OE_ASSETS_READY; }
@@ -151,7 +200,9 @@
       $('start').classList.add('on'); st.textContent = 'Toque para entrar';
       OE.ready = true;
     } catch (e) { console.error(e); st.textContent = 'Erro: ' + e.message; OE.loadError = e; }
-    $('start').addEventListener('click', () => { if (!OE.ready) return; $('splash').classList.add('off'); g.start(); if (!OE.Input.touch && !OE.noPointerLock) $('cv').requestPointerLock && $('cv').requestPointerLock(); });
+    $('resume').addEventListener('click', () => { g.setPause(false); if (!OE.Input.touch && $('cv').requestPointerLock) $('cv').requestPointerLock(); });
+    $('start').addEventListener('click', () => { if (!OE.ready) return;
+      if (OE.Input.touch || matchMedia('(pointer: coarse)').matches) { OE.Input.lockLandscape(); document.body.classList.add('hint'); setTimeout(() => document.body.classList.remove('hint'), 7000); } $('splash').classList.add('off'); g.start(); if (!OE.Input.touch && !OE.noPointerLock) $('cv').requestPointerLock && $('cv').requestPointerLock(); });
     if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !OE.debug) navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 })(window.OE);

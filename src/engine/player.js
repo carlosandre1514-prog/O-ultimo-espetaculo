@@ -26,6 +26,8 @@
       if (I.pressed('crouch')) { if (this.crouch) { if (this.canStand()) this.crouch = false; } else this.crouch = true; }
       // força agachar se não cabe em pé (duto, debaixo de arquibancada)
       if (!this.crouch && !this.canStand()) this.crouch = true;
+      // pulo
+      if (I.pressed('jump') && this.grounded && !this.crouch) { this.vy = 5.0; this.grounded = false; this.jumping = true; OE.Avatar && OE.Avatar.once('jump'); OE.Audio.play('step', null, 0.5); }
       const ax = I.axes(); let speed = this.crouch ? 1.25 : 2.4;
       const wantsRun = ax.run && !this.crouch && ax.y > 0.2 && this.stamina > 0.05;
       if (wantsRun) { speed = 4.6; this.stamina = Math.max(0, this.stamina - dt / 7); } else this.stamina = Math.min(1, this.stamina + dt / (this.moving ? 9 : 5));
@@ -58,10 +60,10 @@
       p.x = tmp.x; p.z = tmp.z;
       // chão: sobe degraus, gruda ao descer escadas, cai de bordas
       const g = this.world.ground(p.x, p.z, p.y + STEP, R);
-      if (this.grounded && g > p.y - STEP - 0.05 && g <= p.y + STEP) { p.y = g; this.vy = 0; }
+      if (this.grounded && this.vy <= 0 && g > p.y - STEP - 0.05 && g <= p.y + STEP) { p.y = g; this.vy = 0; }
       else {
         this.vy -= GRAV * dt; p.y += this.vy * dt;
-        if (p.y <= g) { p.y = g; if (this.vy < -9) OE.Audio.play('step', null, 1); this.vy = 0; this.grounded = true; }
+        if (p.y <= g) { p.y = g; if (this.vy < -4) { OE.Audio.play('step', null, 1); OE.emit('noise', { pos: p.clone(), radius: 7, source: 'player' }); } this.vy = 0; this.grounded = true; this.jumping = false; }
         else this.grounded = false;
       }
       if (this.grounded) this.grounded = true;

@@ -7,11 +7,15 @@
    (escuro reduz o alcance, lanterna aumenta), persegue, procura, abre portas e revista
    esconderijos conforme as regras do HidingSpots. Dificuldade constante: velocidades fixas. */
 (function (OE) {
-  const SPEED = { patrol: 1.35, investigate: 2.1, chase: 3.75, search: 1.7 };
+  /* Dificuldade fixa ≈ 7,5 de 10: corre a 4,15 m/s (o jogador corre 4,6 m/s, mas o fôlego dura ~7 s),
+     prevê a fuga, revista esconderijos perto de onde perdeu o jogador (e lembra os preferidos),
+     de tempos em tempos "sente" a região do jogador; ao avistar, grita (~0,8 s de vantagem). */
+  const SPEED = { patrol: 1.45, investigate: 2.35, chase: 4.15, search: 1.95 };
+  const CHECK_CHANCE = { fechado: 0.55, aberto: 0.8, improvisado: 0.65 };
   const tmp = new THREE.Vector3();
 
   async function loadBody() {
-    const resp = await fetch(OE.asset('assets/enemy_body.bin')); if (!resp.ok) throw new Error('enemy_body.bin');
+    const resp = await fetch(window.OE_ASSET_LAZY ? await window.OE_ASSET_LAZY('assets/enemy_body.bin') : OE.asset('assets/enemy_body.bin')); if (!resp.ok) throw new Error('enemy_body.bin');
     const buf = await resp.arrayBuffer(), dv = new DataView(buf), nV = dv.getUint32(0, true), nT = dv.getUint32(4, true);
     let o = 8; const pos = new Float32Array(buf, o, nV * 3); o += nV * 12; const uv = new Float32Array(buf, o, nV * 2); o += nV * 8;
     const idx = new Uint32Array(buf, o, nT * 3); o += nT * 12; const J = new Float32Array(buf, o, 15);
@@ -32,8 +36,12 @@
       const ext = OE.Models && await OE.Models.enemyModel();
       if (ext) { this.group.add(ext.obj); this.eyeH = 1.9; this.mixer = ext.mixer; this.actions = ext.actions;
         const pick = (...ks) => ks.map(k => Object.keys(ext.actions).find(n => n.includes(k))).find(Boolean);
-        this.clipWalk = ext.actions[pick('walk')]; this.clipRun = ext.actions[pick('run')] || this.clipWalk; this.clipIdle = ext.actions[pick('idle')];
-        [this.clipWalk, this.clipRun, this.clipIdle].forEach(a => { if (a) { a.play(); a.setEffectiveWeight(0); } });
+        const A = ext.actions;
+        this.clipWalk = A.stalk || A[pick('walk')]; this.clipRun = A.chase || A[pick('run')] || this.clipWalk; this.clipIdle = A.idle || A.search || A[pick('idle')];
+        this.clipSearch = A.search;
+        [this.clipWalk, this.clipRun, this.clipIdle, this.clipSearch].forEach(a => { if (a) { a.play(); a.setEffectiveWeight(0); } });
+        // ações de uma vez só (grito, agarrar, facada, abrir porta)
+        ['scream', 'grab', 'stab', 'door'].forEach(k => { if (A[k]) { A[k].setLoop(k === 'stab' ? THREE.LoopRepeat : THREE.LoopOnce, k === 'stab' ? Infinity : 1); A[k].clampWhenFinished = true; } });
         return; }
       if (body) this._buildBody(body, await loadImg(OE.asset('assets/skin_m_suit.jpg')).catch(() => null)); else this._fallbackBody();
     }
@@ -125,6 +133,7 @@
     }
     canSee(P) {
       if (P.hidden || P.spectator) return false;
+      if (this.pos.distanceTo(P.pos) < 2.6 && Math.abs(P.pos.y - this.pos.y) < 1.2) return true;   // sente quem está colado nele
       const eye = tmp.set(this.pos.x, this.pos.y + (this.eyeH || 1.9), this.pos.z), d = eye.distanceTo(P.cam.position);
       const lit = OE.game.flashOn ? 1 : (OE.Lights.zone && OE.Lights.zone.name === 'exterior' ? 0.75 : 0.55);
       const range = (P.crouch ? 0.7 : 1) * (this.state === 'chase' ? 32 : 26) * lit;
@@ -142,8 +151,8 @@
       if (this.percT <= 0) {
         this.percT = 0.1; const see = this.canSee(P); this.seesPlayer = see;
         if (see) { this.visibleT = OE.state.time; const d = this.pos.distanceTo(P.pos); this.aware += 0.1 * (d < 6 ? 6 : 14 / d) * (P.moving ? 1.3 : 0.8);
-          if (this.aware > 1 && this.state !== 'chase') { this.state = 'chase'; OE.Audio.play('sting', null, 0.8); OE.emit('chase', true); }
-          this.lastSeen = P.pos.clone(); this.lostT = 0; }
+          if (this.aware > 1 && this.state !== 'chase') { this.state = 'chase'; this.screamT = 0.8; this.playOnce && this.playOnce('scream'); OE.Audio.play('sting', null, 0.8); OE.emit('chase', true); }
+          if (this.lastSeen) this.lastVel = P.pos.clone().sub(this.lastSeen).multiplyScalar(10); this.lastSeen = P.pos.clone(); this.lostT = 0; }
         else this.aware = Math.max(0, this.aware - 0.03);
       }
       // jogador se escondeu na frente dele
@@ -153,15 +162,15 @@
       let speed = SPEED.patrol;
       if (this.state === 'chase') {
         speed = SPEED.chase;
-        if (P.hidden) { this.state = 'search'; this.goTo(this.lastSeen || P.pos); }
+        if (P.hidden) this.startSearch(this.lastSeen || P.pos);
         else if (this.seesPlayer) {
           const direct = Math.abs(P.pos.y - this.pos.y) < 0.6 && !OE.world.blocked({ x: this.pos.x, y: this.pos.y + 0.5, z: this.pos.z }, { x: P.pos.x, y: P.pos.y + 0.5, z: P.pos.z }, c => c.see && false);
           if (direct) { this.path = null; this.moveTowards(P.pos, speed, dt); }
           else { this.repath = (this.repath || 0) - dt; if (this.repath <= 0 || !this.path) { this.repath = 0.8; this.goTo(P.pos); } }
         } else {
           this.lostT += dt; this.repath = (this.repath || 0) - dt;
-          if (this.repath <= 0) { this.repath = 1; this.goTo(this.lastSeen || P.pos); }
-          if (this.lostT > 6) { this.state = 'search'; this.wait = 2.5; OE.emit('chase', false); }
+          if (this.repath <= 0) { this.repath = 1; const pred = this.lastSeen ? this.lastSeen.clone().addScaledVector(this.lastVel || new THREE.Vector3(), Math.min(2, this.lostT + 0.8)) : P.pos; this.goTo(pred); }
+          if (this.lostT > 5) { this.startSearch(this.lastSeen || P.pos); OE.emit('chase', false); }
         }
         if (this.pos.distanceTo(P.pos) < 1.05 && Math.abs(P.pos.y - this.pos.y) < 1) return this.grab();
       } else if (this.state === 'searchSpot') {
@@ -169,10 +178,17 @@
         const s = this.searchSpot; if (!s) { this.state = 'patrol'; }
         else if (Math.hypot(this.pos.x - s.entry.x, this.pos.z - s.entry.z) < 1.0) {
           this.faceTo(s.x, s.z, dt);
-          this.wait += dt; if (this.wait > 1.2) { this.wait = 0; if (s.occupied) { OE.Hiding.forceOut(); return this.grab(); } this.searchSpot = null; this.state = 'search'; }
+          this.wait += dt; if (this.wait > 1.2) { this.wait = 0; if (s.occupied) { OE.Hiding.forceOut(); return this.grab(); } this.searchSpot = null; this.startSearch(this.pos); }
           speed = 0;
         }
-      } else if (this.state === 'investigate' || this.state === 'search') speed = this.state === 'investigate' ? SPEED.investigate : SPEED.search;
+      } else if (this.state === 'search') { speed = SPEED.search; this.updateSearch(dt); if (this.state !== 'search') speed = SPEED.patrol; }
+      else if (this.state === 'investigate') speed = SPEED.investigate;
+      // grito ao avistar: fica parado um instante
+      if (this.screamT > 0) { this.screamT -= dt; speed = 0; this.faceTo(P.pos.x, P.pos.z, dt); this.animate(dt, 0); return; }
+      // faro: de tempos em tempos vai para perto de onde o jogador está
+      this.senseT = (this.senseT === undefined ? 35 : this.senseT) - dt;
+      if (this.senseT <= 0 && (this.state === 'patrol')) { this.senseT = 38 + Math.random() * 22; const a = Math.random() * 6.28, r = 4 + Math.random() * 8;
+        this.state = 'investigate'; this.goTo(new THREE.Vector3(P.pos.x + Math.cos(a) * r, P.pos.y, P.pos.z + Math.sin(a) * r)); }
 
       // jogador escondido: passa perto e pode perceber (exposição do esconderijo)
       if (P.hidden && this.state !== 'searchSpot') {
@@ -187,8 +203,8 @@
       else if (!this.path && this.state !== 'chase' && this.state !== 'searchSpot') {
         this.wait -= dt;
         if (this.wait <= 0) {
-          if (this.state === 'investigate') { this.state = 'search'; this.wait = 3; this.lookAround = 3; }
-          else if (this.state === 'search') { this.state = 'patrol'; this.pickPatrol(); }
+          if (this.state === 'investigate') { this.startSearch(this.goal || this.pos); this.searchT = 8; }
+          else if (this.state === 'search') { if (!(this.searchT > 0)) { this.state = 'patrol'; this.pickPatrol(); } }
           else { this.pickPatrol(); this.wait = 2 + Math.random() * 4; }
         } else this.yaw += Math.sin(OE.state.time * 0.9) * dt * 0.8;     // olha em volta
       }
@@ -197,6 +213,31 @@
       if (this.stuckCheck > 3) { this.stuckCheck = 0; if (this.path && this.lastPos.distanceTo(this.pos) < 0.4 && !this.doorWait) { this.path = null; this.wait = 0.5; } this.lastPos.copy(this.pos); }
       this.animate(dt, speed);
     }
+    // Busca: visita esconderijos perto do ponto onde perdeu o jogador (os mais usados primeiro)
+    startSearch(p) {
+      this.state = 'search'; this.searchT = 18; this.searchOrigin = p.clone ? p.clone() : new THREE.Vector3(p.x, p.y, p.z);
+      const spots = OE.Hiding.spots.filter(s => Math.hypot(s.x - p.x, s.z - p.z) < 10 && Math.abs((s.y || 0) - p.y) < 2)
+        .sort((a, b) => ((b.uses || 0) - (a.uses || 0)) || (Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z)));
+      this.searchList = spots.slice(0, 4); this.searchSpotCur = null; this.path = null;
+    }
+    updateSearch(dt) {
+      this.searchT -= dt; if (this.searchT <= 0) { this.state = 'patrol'; this.pickPatrol(); return; }
+      const s = this.searchSpotCur;
+      if (!s) { const next = this.searchList && this.searchList.shift(); if (!next) { if (!this.path) { const a = Math.random() * 6.28; this.goTo(this.searchOrigin.clone().add(new THREE.Vector3(Math.cos(a) * 5, 0, Math.sin(a) * 5))); } return; }
+        this.searchSpotCur = next; this.inspectT = 0; this.goTo(new THREE.Vector3(next.entry.x, next.y || 0, next.entry.z)); return; }
+      if (Math.hypot(this.pos.x - s.entry.x, this.pos.z - s.entry.z) < 1.1 || !this.path) {
+        this.faceTo(s.x, s.z, dt); this.inspectT += dt;
+        if (this.inspectT > 1.2) { this.searchSpotCur = null;
+          if (s.occupied && Math.random() < (CHECK_CHANCE[s.cat] || 0.6) * (OE.game.flashOn ? 1.25 : 1)) { OE.Hiding.forceOut(); this.grab(); } }
+      }
+    }
+    // toca uma ação por cima das outras (grito, agarrar, facada); devolve a duração do clipe
+    playOnce(name, speed) {
+      const a = this.actions && this.actions[name]; if (!a) return 0;
+      this.oneShot = a; a.reset(); a.timeScale = speed || 1; a.setEffectiveWeight(1); a.play();
+      return a.getClip().duration / (speed || 1);
+    }
+    stopOnce() { if (this.oneShot) { this.oneShot.stop(); this.oneShot = null; } }
     faceTo(x, z, dt) { let a = Math.atan2(x - this.pos.x, z - this.pos.z) - this.yaw; while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; this.yaw += a * Math.min(1, dt * 5); }
     moveTowards(t, speed, dt) {
       const dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz); if (d < 0.05) return true;
@@ -234,10 +275,11 @@
       const moving = this.moved > 0 ? 1 : 0; this.moved = 0;
       this.phase += dt * (moving ? 2.2 + speed * 1.4 : 0); const amp = moving ? Math.min(0.55, 0.18 + speed * 0.1) : 0;
       if (this.mixer) {   // esqueleto: mistura parado / andar / correr pela velocidade
-        const run = moving && speed > 2.6, walk = moving && !run, k = Math.min(1, dt * 6);
+        const busy = this.oneShot && this.oneShot.isRunning(), run = !busy && moving && speed > 2.6, walk = !busy && moving && !run, k = Math.min(1, dt * 6);
         const blend = (a, w) => { if (a) a.setEffectiveWeight(a.getEffectiveWeight() + (w - a.getEffectiveWeight()) * k); };
         if (this.clipRun === this.clipWalk) blend(this.clipWalk, moving ? 1 : 0); else { blend(this.clipWalk, walk ? 1 : 0); blend(this.clipRun, run ? 1 : 0); }
-        if (this.clipIdle) blend(this.clipIdle, moving ? 0 : 1);
+        if (this.clipIdle) blend(this.clipIdle, !busy && !moving && this.state !== 'search' ? 1 : 0); if (this.clipSearch) blend(this.clipSearch, !busy && !moving && this.state === 'search' ? 1 : 0);
+        if (this.oneShot && !this.oneShot.isRunning() && this.oneShot.getEffectiveWeight() > 0 && this.state !== 'grab') { this.oneShot.setEffectiveWeight(Math.max(0, this.oneShot.getEffectiveWeight() - dt * 4)); }
         if (this.clipWalk) this.clipWalk.timeScale = moving ? Math.max(0.6, speed / 1.4) : 1;
         this.mixer.update(dt);
       }

@@ -34,7 +34,7 @@
   H.enter = function (s) {
     const P = OE.game.player; if (H.seq || s.occupied || P.hidden) return;
     const from = { x: P.cam.position.x, y: P.cam.position.y, z: P.cam.position.z, yaw: P.yaw, pitch: P.pitch };
-    P.control = false; s.occupied = true; P.hidden = s; H.active = s; s.enteredAt = OE.state.time;
+    P.control = false; s.occupied = true; P.hidden = s; H.active = s; s.enteredAt = OE.state.time; s.uses = (s.uses || 0) + 1;
     s.enteredRunning = P.running;
     const c = s.cam, e = { x: s.entry.x, y: (s.y || 0) + (s.low ? 0.9 : 1.55), z: s.entry.z, yaw: c.yaw, pitch: s.low ? -0.25 : 0 };
     H.seq = { t: 0, dur: s.anim ? 1.5 : 1.15, from, mid: e, to: c, dir: 1, s };

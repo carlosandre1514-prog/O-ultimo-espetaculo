@@ -102,7 +102,15 @@
   "height": 2.05,
   "anims": {
    "walk": "palhaco_walk.glb",
-   "run": "palhaco_run.glb"
+   "run": "palhaco_run.glb",
+   "idle": "anim/clown_idle.glb",
+   "stalk": "anim/clown_stalk.glb",
+   "chase": "anim/clown_chase.glb",
+   "scream": "anim/clown_scream.glb",
+   "search": "anim/clown_search.glb",
+   "grab": "anim/clown_grab.glb",
+   "stab": "anim/clown_stab.glb",
+   "door": "anim/clown_door.glb"
   }
  },
  "rides": [
@@ -982,10 +990,10 @@
      "cat": "improvisado",
      "x": -4.144818817376798,
      "z": 3.839658444591029,
-     "yaw": 2.394395102393195,
+     "yaw": -0.8235987755982985,
      "low": true,
      "camY": 1.05,
-     "depth": 1,
+     "depth": 0.75,
      "name": "dentro da x\u00edcara"
     }
    ]
@@ -1027,7 +1035,7 @@
      "cat": "aberto",
      "x": 3.8,
      "z": 2.2,
-     "yaw": 3.141592653589793,
+     "yaw": 0,
      "low": true,
      "clear": 1.2,
      "name": "atr\u00e1s do painel da torre"
@@ -1437,5 +1445,74 @@
     }
    ]
   }
- ]
+ ],
+ "characters": [
+  {
+   "id": "lucas",
+   "file": "personagens/lucas.glb",
+   "foto": "assets/retratos/lucas.png",
+   "nome": "Lucas",
+   "idade": 17,
+   "desc": "O l\u00edder do grupo. Jaqueta jeans, nunca larga a lanterna.",
+   "height": 1.74
+  },
+  {
+   "id": "bia",
+   "file": "personagens/bia.glb",
+   "foto": "assets/retratos/bia.png",
+   "nome": "Bia",
+   "idade": 16,
+   "desc": "Curiosa e r\u00e1pida. Moletom amarelo e mochila.",
+   "height": 1.64
+  },
+  {
+   "id": "rafa",
+   "file": "personagens/rafa.glb",
+   "foto": "assets/retratos/rafa.png",
+   "nome": "Rafa",
+   "idade": 17,
+   "desc": "Atleta do time da escola. Corre mais que todo mundo.",
+   "height": 1.8
+  },
+  {
+   "id": "julia",
+   "file": "personagens/julia.glb",
+   "foto": "assets/retratos/julia.png",
+   "nome": "J\u00falia",
+   "idade": 16,
+   "desc": "G\u00f3tica e calma. Nada assusta a J\u00falia... at\u00e9 hoje.",
+   "height": 1.64
+  },
+  {
+   "id": "davi",
+   "file": "personagens/davi.glb",
+   "foto": "assets/retratos/davi.png",
+   "nome": "Davi",
+   "idade": 15,
+   "desc": "O mais novo. \u00d3culos, camisa xadrez e medo de palha\u00e7o.",
+   "height": 1.62
+  },
+  {
+   "id": "manu",
+   "file": "personagens/manu.glb",
+   "foto": "assets/retratos/manu.png",
+   "nome": "Manu",
+   "idade": 17,
+   "desc": "Cabelo cacheado, jaqueta vermelha, a mais corajosa.",
+   "height": 1.64
+  }
+ ],
+ "teenAnims": {
+  "idle": "anim/teen_idle.glb",
+  "walk": "anim/teen_walk.glb",
+  "run": "anim/teen_run.glb",
+  "jump": "anim/teen_jump.glb",
+  "crouch": "anim/teen_crouch.glb",
+  "pickup": "anim/teen_pickup.glb",
+  "door": "anim/teen_door.glb",
+  "torch": "anim/teen_torch.glb",
+  "strangled": "anim/teen_strangled.glb",
+  "dead": "anim/teen_dead.glb",
+  "scared": "anim/teen_scared.glb"
+ }
 }

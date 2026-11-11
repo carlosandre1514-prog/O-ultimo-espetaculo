@@ -66,7 +66,7 @@
         for (let i = 0; i < 3; i++) { b.cyl(M.rubber, -13 + i * 0.6, 0.3, -46.5, 0.3, 0.3, 0.05, 14, { rx: Math.PI / 2, lod: 'detail' }); b.cyl(M.chrome, -13 + i * 0.6, 0.3, -46.5, 0.015, 0.015, 0.9, 4, { lod: 'clutter' }); }
         for (let i = 0; i < 6; i++) b.cyl(M.paint, -15.6 + (r() - 0.5) * 1.2, 0.78, -42 + (r() - 0.5) * 0.5, 0.03, 0.05, 0.42, 6, { rz: Math.PI / 2, yaw: r() * 3, tint: [0.9, 0.2 + r() * 0.6, 0.1], lod: 'clutter' });
         b.geo(M.metalRed, OE.G.torus(0.45, 0.025, 4, 20), -21.7, 0.6, -40.5, { yaw: Math.PI / 2, rx: 0.2, lod: 'detail' }); b.geo(M.metalYellow, OE.G.torus(0.42, 0.025, 4, 20), -21.7, 0.6, -41.4, { yaw: Math.PI / 2, rx: -0.1, lod: 'detail' });
-        b.box(M.mirror, -21.85, 0.35, -45.5, 0.04, 1.9, 1.4, { col: false, grime: false }); P.ceilingLamp(b, -16, HGT, -43, { mode: 'off' });
+        b.box(M.mirror, -21.85, 0.35, -45.5, 0.04, 1.9, 1.4, { col: false, grime: false }); OE.Mirrors.add({ x: -21.83, y: 1.3, z: -45.5, w: 1.4, h: 1.9, yaw: Math.PI / 2 }); P.ceilingLamp(b, -16, HGT, -43, { mode: 'off' });
         OE.Hiding.wardrobe(b, -21.4, -47.2, Math.PI / 2, { w: 1.2 });
         // ---- escritório 1 (gerência) ----
         P.desk(b, -7, -40, Math.PI, { drawer: true }); P.fileCabinet(b, -9.6, -44, Math.PI / 2); P.fileCabinet(b, -9.6, -44.6, Math.PI / 2);

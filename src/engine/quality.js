@@ -27,4 +27,5 @@
   const name = urlQ || get('oe.quality') || autoPreset();
   OE.Q = Object.assign({ name, fps: +(get('oe.fps') || 60) }, PRESETS[name] || PRESETS.suave);
   OE.Q.presets = PRESETS;
+  OE.charId = () => get('oe.char') || 'lucas';
 })(window.OE);

@@ -16,7 +16,7 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 (async () => {
   for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.glb'))) {
     const p = path.join(dir, f), before = fs.statSync(p).size, doc = await io.read(p), root = doc.getRoot();
-    const animOnly = /_(walk|run|idle)\.glb$/.test(f);
+    const animOnly = /_(walk|run|idle)\.glb$/.test(f) || /[\\/]anim$/.test(dir);
     const ride = /brinquedos/.test(dir);
     if (ride) {
       // brinquedos do MiniBlender: muitas peças com cores lisas -> paleta + uma malha só (1 draw call)

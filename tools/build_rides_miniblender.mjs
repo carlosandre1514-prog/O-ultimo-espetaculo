@@ -119,7 +119,7 @@ window.RIDE = (() => {
         await cyl([x, 1.25, z], 0.15, 0.5, '#8a8a8a', null, M.metal); await tor([x, 1.4, z], 0.25, 0.06, '#3a3a3a', [90, 0, 0], M.metal);
         await tor([x + Math.cos(ca) * 1.05, 1.1, z + Math.sin(ca) * 1.05], 0.3, 0.08, col, [90, -ca / D + 90, 0]);
         ccyl(x, z, 1.05, 0.4, 1.55);
-        if (g === 1 && c === 0) hide({ kind: 'crate', cat: 'improvisado', x, z, yaw: ca, low: true, camY: 1.05, depth: 1.0, name: 'dentro da xícara' }); } }
+        if (g === 1 && c === 0) hide({ kind: 'crate', cat: 'improvisado', x, z, yaw: Math.atan2(x, z), low: true, camY: 1.05, depth: 0.75, name: 'dentro da xícara' }); } }
   };
   // ---------- TORRE DE QUEDA ----------
   R.torre_queda = async () => {
@@ -134,7 +134,7 @@ window.RIDE = (() => {
     await tor([0, 1.0, 0], 2.4, 0.5, '#c8a020', [0, 0, 0]); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; await box([Math.cos(a) * 2.6, 1.5, Math.sin(a) * 2.6], [0.6, 1.0, 0.25], '#2a2a2a', [0, -a / D + 90, 0]); }
     await box([3.8, 1.0, 0], [1.6, 2.0, 2.6], '#5a5a5a', [0, 0, 0], M.rust); cbox(3.8, 0, 0, 1.6, 2.0, 2.6);
     ccyl(0, 0, 3.1, 0, 2.0);
-    hide({ kind: 'equipment', cat: 'aberto', x: 3.8, z: 2.2, yaw: Math.PI, low: true, clear: 1.2, name: 'atrás do painel da torre' });
+    hide({ kind: 'equipment', cat: 'aberto', x: 3.8, z: 2.2, yaw: 0, low: true, clear: 1.2, name: 'atrás do painel da torre' });
   };
   // ---------- TRENZINHO INFANTIL ----------
   R.trenzinho = async () => {

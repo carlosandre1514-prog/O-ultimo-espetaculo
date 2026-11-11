@@ -27,7 +27,7 @@
     IX.current = best;
     const label = best ? best.label() : null;
     OE.UI.prompt(label);
-    if (best && OE.Input.pressed('interact')) best.use(player);
+    if (best && OE.Input.pressed('interact')) { best.use(player); if (OE.Avatar) OE.Avatar.once(best instanceof OE.Door ? 'door' : (best instanceof OE.Pickup || best instanceof OE.Drawer) ? 'pickup' : null); }
   };
 
   // Mini-builder para peças móveis (portas, gavetas): mesma qualidade de UV/cor do cenário.

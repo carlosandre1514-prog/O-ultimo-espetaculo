@@ -1,0 +1,93 @@
+{
+ "lucas": {
+  "preview": "01a1cbe1-6a95-731a-aa4f-09a008f93375",
+  "refine": "01a1cbe2-5598-723f-a974-ad98fbcded81",
+  "rig": "01a1cbe3-95d2-7145-b8db-5cfe9c4183ca"
+ },
+ "bia": {
+  "preview": "01a1cbe1-6ade-77a4-a14c-5198d5e33c76",
+  "refine": "01a1cbe2-7454-73d4-8a19-3015bf059349",
+  "rig": "01a1cbe4-15ea-7747-b0be-1b6ae64d3c87"
+ },
+ "rafa": {
+  "preview": "01a1cbe1-6a95-7303-b901-c5562c8a75ef",
+  "refine": "01a1cbe2-35ca-70aa-85ea-826bd321c769",
+  "rig": "01a1cbe3-1768-7064-884a-b35311d584d4"
+ },
+ "julia": {
+  "preview": "01a1cbe1-6a7a-74f6-a6d0-78b8011d62c3",
+  "refine": "01a1cbe2-98c4-7362-b6b1-2d9a8d298283",
+  "rig": "01a1cbe4-9bb4-716b-886f-d8c6d864c96c"
+ },
+ "davi": {
+  "preview": "01a1cbe1-6a74-735c-90fe-3832fa487ae0",
+  "refine": "01a1cbe2-d810-7123-98ac-d4d3b84b730e",
+  "rig": "01a1cbe5-395f-76e2-8ff9-a26249f9ed18"
+ },
+ "manu": {
+  "preview": "01a1cbe1-6aa2-761f-a669-4fa8ea68012a",
+  "refine": "01a1cbe4-142d-760f-9ee9-c2e716bf33a0",
+  "rig": "01a1cbe6-b4e7-74e1-8675-c8f25b7dca3b"
+ },
+ "anim_teen": {
+  "idle": {
+   "task": "01a1cbe9-234b-73d6-a451-78eb3d43214c"
+  },
+  "walk": {
+   "task": "01a1cbe9-253e-7468-a18d-a34510b944b8"
+  },
+  "run": {
+   "task": "01a1cbe9-24dd-7206-b179-068dc4600f56"
+  },
+  "jump": {
+   "task": "01a1cbe9-24bf-75a4-b651-79aad99b2867"
+  },
+  "crouch": {
+   "task": "01a1cbe9-24be-7658-b302-5be7596cf98b"
+  },
+  "pickup": {
+   "task": "01a1cbe9-24d3-712a-8aed-1fd47bea7ae4"
+  },
+  "door": {
+   "task": "01a1cbe9-2506-735c-aadd-5292f9d1bd8a"
+  },
+  "torch": {
+   "task": "01a1cbe9-2506-72fd-aa06-d9575763220b"
+  },
+  "strangled": {
+   "task": "01a1cbe9-24e9-7493-80e1-b70773e675f0"
+  },
+  "dead": {
+   "task": "01a1cbe9-24e4-7534-a27a-f74daa7ff940"
+  },
+  "scared": {
+   "task": "01a1cbe9-24c1-76c9-bc17-59277cc76340"
+  }
+ },
+ "anim_clown": {
+  "idle": {
+   "task": "01a1cbeb-c876-73bc-9b79-e321d4983675"
+  },
+  "stalk": {
+   "task": "01a1cbeb-c9fd-7788-80b3-6800e9fdcd79"
+  },
+  "chase": {
+   "task": "01a1cbeb-c9ee-717c-84ad-caa3e3fef856"
+  },
+  "scream": {
+   "task": "01a1cbeb-c9f7-7180-a716-144bcfa69f66"
+  },
+  "search": {
+   "task": "01a1cbeb-c866-749f-908b-e1d7d393d34c"
+  },
+  "grab": {
+   "task": "01a1cbeb-c9d6-7587-91cf-3291bae8ba1e"
+  },
+  "stab": {
+   "task": "01a1cbeb-c9dd-7679-a031-8fb323cef2f1"
+  },
+  "door": {
+   "task": "01a1cbeb-c9c4-74cb-b0fb-d3936adc0a8e"
+  }
+ }
+}

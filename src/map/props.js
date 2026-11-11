@@ -154,6 +154,7 @@
     l.box(M().woodCream, 0, 0.72, 0, w, 0.05, 0.5, { col: false }); l.box(M().woodCream, -w / 2 + 0.25, 0, 0, 0.45, 0.72, 0.48, { col: false }); l.box(M().woodCream, w / 2 - 0.04, 0, 0, 0.04, 0.72, 0.48, { col: false });
     l.col(0, 0.7, 0, w, 0.07, 0.5, 'furn'); l.col(-w / 2 + 0.25, 0, 0, 0.45, 0.72, 0.48, 'furn');
     l.box(M().mirror, 0, 1.02, -0.22, w - 0.2, 0.85, 0.02, { col: false, grime: false });
+    { const q = l.p(0, -0.209); OE.Mirrors.add({ x: q.x, y: l.y0 + 1.445, z: q.z, w: w - 0.2, h: 0.85, yaw }); }
     l.box(M().woodDark, 0, 0.95, -0.24, w, 0.06, 0.04, { col: false, lod: 'detail' }); l.box(M().woodDark, 0, 1.9, -0.24, w, 0.06, 0.04, { col: false, lod: 'detail' });
     [-1, 1].forEach(k => l.box(M().woodDark, k * (w / 2 - 0.03), 0.95, -0.24, 0.06, 1.0, 0.04, { col: false, lod: 'detail' }));
     // lâmpadas em volta do espelho: a maioria queimada, algumas piscando
@@ -184,7 +185,7 @@
     b.colCyl(l.p(0, 0).x, l.p(0, 0).z, 0.2, l.y0, l.y0 + 1.8, 'prop');
   };
   // ---------------- Banheiro / cozinha / escritório ----------------
-  P.sink = function (b, x, z, yaw) { const l = L(b, x, z, yaw); l.box(M().ceramic, 0, 0.78, 0, 0.55, 0.12, 0.42, { col: false }); l.cyl(M().ceramic, 0, 0, 0.02, 0.07, 0.09, 0.78, 8); l.box(M().chrome, 0, 0.9, -0.15, 0.05, 0.12, 0.05, { col: false, lod: 'clutter' }); l.box(M().chrome, 0, 1.0, -0.08, 0.03, 0.03, 0.16, { col: false, lod: 'clutter' }); l.box(M().mirror, 0, 1.2, -0.2, 0.5, 0.6, 0.015, { col: false, grime: false, rz: (b.r() - 0.5) * 0.06 }); l.col(0, 0, 0, 0.55, 0.9, 0.42, 'furn'); };
+  P.sink = function (b, x, z, yaw) { const l = L(b, x, z, yaw); l.box(M().ceramic, 0, 0.78, 0, 0.55, 0.12, 0.42, { col: false }); l.cyl(M().ceramic, 0, 0, 0.02, 0.07, 0.09, 0.78, 8); l.box(M().chrome, 0, 0.9, -0.15, 0.05, 0.12, 0.05, { col: false, lod: 'clutter' }); l.box(M().chrome, 0, 1.0, -0.08, 0.03, 0.03, 0.16, { col: false, lod: 'clutter' }); l.box(M().mirror, 0, 1.2, -0.2, 0.5, 0.6, 0.015, { col: false, grime: false }); { const q = l.p(0, -0.192); OE.Mirrors.add({ x: q.x, y: l.y0 + 1.5, z: q.z, w: 0.5, h: 0.6, yaw }); } l.col(0, 0, 0, 0.55, 0.9, 0.42, 'furn'); };
   P.shower = function (b, x, z, yaw) { const l = L(b, x, z, yaw); l.cyl(M().chrome, 0, 0, -0.45, 0.015, 0.015, 2.1, 5); l.bar(M().chrome, [0, 2.1, -0.45], [0, 2.1, -0.2], 0.03); l.cyl(M().chrome, 0, 2.0, -0.2, 0.08, 0.04, 0.08, 8, { lod: 'clutter' }); l.box(M().tiles, 0, 0, 0, 0.9, 0.05, 0.9, { col: false, tint: 0x8a8a80 }); [-1, 1].forEach(k => l.box(M().tiles, k * 0.47, 0, 0, 0.06, 1.9, 0.95)); };
   P.counter = function (b, x, z, yaw, w, o) {
     o = o || {}; const l = L(b, x, z, yaw), r = b.r;

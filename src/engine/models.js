@@ -12,7 +12,8 @@
   OE.Models = M;
   function loader() { return new THREE.GLTFLoader(); }
   async function loadGLTF(file) {
-    return new Promise((res, rej) => loader().load(OE.asset('assets/models/' + file), g => res(g), undefined, rej));
+    const p = 'assets/models/' + file, url = window.OE_ASSET_LAZY ? await window.OE_ASSET_LAZY(p) : OE.asset(p);   // artefato: decodifica sob demanda
+    return new Promise((res, rej) => loader().load(url, g => res(g), undefined, rej));
   }
   async function loadGLB(file) { return (await loadGLTF(file)).scene; }
   // normaliza altura, apoia no chão, materiais padronizados (sombra/neblina iguais ao resto)
@@ -38,6 +39,19 @@
   };
   // Inimigo: GLB com esqueleto (rigging do Meshy) + clipes de animação em arquivos separados
   // ("anims": {"walk": "x_walk.glb", "run": "x_run.glb"}) — os ossos têm os mesmos nomes.
+  // Adolescentes: modelo com esqueleto + clipes compartilhados (mesmos 24 ossos em todos os rigs do Meshy)
+  const clipCache = {};
+  M.loadCharacter = async function (id) {
+    const m = await M.loadManifest(); if (!m || !m.characters) return null;
+    const c = m.characters.find(x => x.id === id) || m.characters[0]; if (!c) return null;
+    const g = await loadGLTF(c.file), obj = fit(g.scene, c.height || 1.72);
+    const mixer = new THREE.AnimationMixer(g.scene), actions = {};
+    for (const [k, f] of Object.entries(m.teenAnims || {})) {
+      try { if (!clipCache[k]) { const a = await loadGLTF(f); clipCache[k] = a.animations[0]; } if (clipCache[k]) actions[k] = mixer.clipAction(clipCache[k]); } catch (e) { console.warn('animação', k, e); }
+    }
+    ['jump', 'pickup', 'door', 'strangled', 'dead', 'scared'].forEach(k => { if (actions[k]) { actions[k].setLoop(THREE.LoopOnce, 1); actions[k].clampWhenFinished = true; } });
+    return { obj, mixer, actions, info: c };
+  };
   M.enemyModel = async function () {
     const m = await M.loadManifest(); if (!m || !m.enemy) return null;
     try {

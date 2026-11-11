@@ -19,6 +19,22 @@
     for (let i = 0; i < POOL; i++) { const p = new THREE.PointLight(0xffc890, 0, 12, 2); p.userData.em = null; p.userData.fade = 0; scene.add(p); L.pool.push(p); }
     L.flash = new THREE.SpotLight(0xfff1d8, 0, 26, 0.5, 0.55, 1.3); L.flash.position.set(0.18, -0.2, 0); L.flash.target.position.set(0, -0.15, -4);
     camera.add(L.flash); camera.add(L.flash.target);
+    // feixe visível da lanterna: cone aditivo preso à câmera (some atrás das paredes pelo teste de profundidade)
+    const BL = 11, BR = Math.tan(0.36) * BL, cg = new THREE.ConeGeometry(BR, BL, 28, 8, true);
+    cg.rotateX(Math.PI / 2); cg.translate(0, 0, -BL / 2);
+    L.beamMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      uniforms: { uStr: { value: 0 }, uCol: { value: new THREE.Color(0xfff0d0) } },
+      vertexShader: 'varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vT = clamp(-position.z / ' + BL.toFixed(1) + ', 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform float uStr; uniform vec3 uCol; varying float vT; varying vec3 vN; varying vec3 vV;\n void main(){ float edge = pow(abs(dot(vN, vV)), 1.6); float a = uStr * pow(1.0 - vT, 1.7) * edge * smoothstep(0.0, 0.06, vT); gl_FragColor = vec4(uCol * a, 1.0); }' });
+    L.beam = new THREE.Mesh(cg, L.beamMat); L.beam.position.set(0.17, -0.19, -0.3); L.beam.rotation.x = -0.035; L.beam.frustumCulled = false; L.beam.renderOrder = 5; L.beam.visible = false; camera.add(L.beam);
+    // lanterna na mão (canto inferior direito da tela)
+    L.torch = new THREE.Group(); L.torch.position.set(0.22, -0.24, -0.42); camera.add(L.torch);
+    const tm = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.45, metalness: 0.7 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.02, 0.2, 14), tm); body.rotation.x = Math.PI / 2; body.position.z = 0.08; L.torch.add(body);
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.024, 0.06, 16), tm); head.rotation.x = Math.PI / 2; head.position.z = -0.04; L.torch.add(head);
+    L.lensMat = new THREE.MeshBasicMaterial({ color: 0x222222 }); const lens = new THREE.Mesh(new THREE.CircleGeometry(0.031, 18), L.lensMat); lens.position.z = -0.071; lens.rotation.y = Math.PI; L.torch.add(lens);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), new THREE.MeshStandardMaterial({ color: 0x8a6048, roughness: 0.8 })); hand.scale.set(1, 0.85, 1.6); hand.position.set(0.01, -0.012, 0.1); L.torch.add(hand);
+    L.torch.traverse(o => { o.renderOrder = 6; }); L.torch.visible = false;
     scene.fog = new THREE.FogExp2(0x0a0d14, 0.028); scene.background = new THREE.Color(0x05070c);
     L.fogTarget = { c: new THREE.Color(0x0a0d14), d: 0.028, h: 0.5, m: 0.32 };
     // poeira
@@ -137,5 +153,18 @@
         if (y - c.y < -3) y += 6; else if (y - c.y > 3) y -= 6; a.setXYZ(i, x, y, zz); }
       a.needsUpdate = true; }
   };
-  L.setFlash = function (on) { L.flash.intensity = on ? 2.6 : 0; };
+  L.setFlash = function (on) {
+    L.flash.intensity = on ? 2.6 : 0; L.beam.visible = on; L.torch.visible = true; L.flashOn = on;
+    L.lensMat.color.set(on ? 0xfff4dc : 0x222222);
+  };
+  // balanço da lanterna com o passo e o feixe mais visível na neblina/poeira
+  L.updateTorch = function (dt, P) {
+    if (!L.torch) return; const t = OE.state.time, mv = P && P.moving ? 1 : 0;
+    L.torch.visible = !!(P && !P.hidden && !P.spectator && OE.game && !OE.game.dying);
+    L.torch.position.set(0.22 + Math.sin(t * 5.5) * 0.006 * mv, -0.24 + Math.abs(Math.sin(t * 5.5)) * 0.008 * mv + (P && P.crouch ? 0.02 : 0), -0.42);
+    L.torch.rotation.set(Math.sin(t * 1.3) * 0.01, 0.03, 0);
+    const fog = L.scene.fog ? L.scene.fog.density : 0.03;
+    L.beamMat.uniforms.uStr.value = L.flashOn ? OE.clamp(0.16 + fog * 3.5 + (L.dust.visible ? 0.06 : 0), 0.16, 0.38) : 0;
+    L.beam.visible = L.flashOn && L.torch.visible;
+  };
 })(window.OE);

@@ -12,7 +12,8 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;background:#000;color:#e8dcc4;font:14px/1.35 Georgia,'Times New Roman',serif;overflow:hidden;overscroll-behavior:none}
-#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#root{position:fixed;left:0;top:0;transform-origin:0 0;overflow:hidden;background:#000}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at center,#1a0606 0%,#000 70%);z-index:20;transition:opacity 1.2s}
 #splash.off{opacity:0;pointer-events:none}
 #splash h1{margin:0;font-size:clamp(30px,7vw,64px);letter-spacing:3px;color:#c8a860;text-shadow:0 0 18px #6a0a0a;text-align:center}
@@ -21,6 +22,13 @@ html,body{margin:0;height:100%;background:#000;color:#e8dcc4;font:14px/1.35 Geor
 #loadSt{color:#8a7a60;font-size:13px;min-height:18px}
 #start{display:none;background:none;border:1px solid #7a2020;color:#e8c890;font:16px Georgia,serif;padding:12px 34px;letter-spacing:3px;cursor:pointer}
 #start.on{display:block}
+#chars{display:none;gap:8px;overflow-x:auto;max-width:94vw;padding:4px 2px;scrollbar-width:none}
+#chars.on{display:flex}#chars::-webkit-scrollbar{display:none}
+.char{flex:0 0 auto;width:118px;display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(20,10,8,.6);border:1px solid #3a2a1a;color:#d8c8a0;font:12px Georgia,serif;padding:6px;cursor:pointer;text-align:center}
+.char img{width:84px;height:84px;object-fit:cover;background:#120a08;border-radius:4px}
+.char b{font-size:14px;color:#f0d8a0}.char small{color:#8a7a60;font-size:10px}.char span{font-size:10px;line-height:1.25;color:#9a8a70}
+.char.on{border-color:#c03020;background:rgba(70,14,10,.6)}
+#splash{overflow-y:auto}
 #gfx{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;max-width:92vw;font-size:12px;color:#8a7a60}
 #gfx button{background:none;border:1px solid #3a2a1a;color:#a89070;font:12px Georgia,serif;padding:6px 10px;cursor:pointer}
 #gfx button.on{border-color:#a02020;color:#f0d8a0}#gfx .sep{width:10px}
@@ -34,6 +42,7 @@ html,body{margin:0;height:100%;background:#000;color:#e8dcc4;font:14px/1.35 Geor
 #inv span{background:rgba(0,0,0,.5);border:1px solid #3a2a1a;padding:3px 8px;font-size:12px;color:#c8b088}
 #stamW{position:fixed;left:50%;bottom:6%;width:140px;margin-left:-70px;height:2px;background:rgba(255,255,255,.08);opacity:0;transition:opacity .4s;z-index:6}
 #stamW.on{opacity:1}#stam{height:100%;background:rgba(220,200,160,.6);transform-origin:center}
+#blood{position:fixed;inset:0;pointer-events:none;z-index:7;opacity:0;background:radial-gradient(ellipse at center,rgba(120,0,0,0) 30%,rgba(140,0,0,.85) 100%);mix-blend-mode:multiply}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:8;transition:opacity .1s}
 #debug{position:fixed;left:8px;top:8px;white-space:pre;font:11px/1.4 monospace;color:#7f7;background:rgba(0,0,0,.6);padding:6px 8px;display:none;z-index:9;pointer-events:none}
 #debug.on{display:block}
@@ -48,43 +57,69 @@ body.hid-h #hideV{opacity:1;background:radial-gradient(ellipse at center,transpa
 body.hid-gap #hideV{opacity:1;background:linear-gradient(180deg,#000 0,#000 40%,rgba(0,0,0,.2) 46%,rgba(0,0,0,.2) 56%,#000 64%,#000 100%)}
 body.hid-low #hideV{opacity:1;background:radial-gradient(ellipse 80% 40% at 50% 60%,transparent 30%,rgba(0,0,0,.92) 80%)}
 body.hid-none #hideV{opacity:1;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.85) 85%)}
-/* controles de toque */
-.tb{display:none}
+/* ---------- HUD de toque ---------- */
+body:not(.touch) .tb{display:none!important}
 body.touch .tb{display:flex}
-#stick{position:fixed;width:140px;height:140px;border-radius:50%;border:1px solid rgba(220,200,160,.18);background:rgba(0,0,0,.15);pointer-events:none;z-index:6;opacity:0;transition:opacity .2s}
-#stick.on{opacity:1}
-#knob{position:absolute;left:45px;top:45px;width:50px;height:50px;border-radius:50%;background:rgba(220,200,160,.25)}
-#btns{position:fixed;right:calc(14px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));flex-direction:column;gap:12px;z-index:7;align-items:flex-end}
-#btns .row{display:flex;gap:12px}
-#btns button{width:62px;height:62px;border-radius:50%;border:1px solid rgba(220,200,160,.3);background:rgba(10,6,4,.45);color:#e0d0a8;font-size:22px;touch-action:none}
-#btns button.on{border-color:#c8a050;background:rgba(80,40,10,.5)}
-#bAct{opacity:.3}#bAct.on{opacity:1;border-color:#e8c890}
+#stickZone{position:absolute;left:0;top:0;bottom:0;pointer-events:none;z-index:5;border-right:1px dashed rgba(220,200,160,.0);transition:border-color .6s}
+body.touch.hint #stickZone{border-right-color:rgba(220,200,160,.18)}
+#stickZone b{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);font:12px Georgia,serif;color:rgba(220,200,160,.35);letter-spacing:2px;opacity:0;transition:opacity .6s}
+body.touch.hint #stickZone b{opacity:1}
+#stick{position:absolute;width:140px;height:140px;border-radius:50%;border:2px solid rgba(220,200,160,.28);background:radial-gradient(circle,rgba(0,0,0,.05) 40%,rgba(0,0,0,.35));pointer-events:none;z-index:6;opacity:0;transition:opacity .12s}
+#stick.on{opacity:1}#stick.run{border-color:rgba(200,60,40,.7)}
+#knob{position:absolute;left:42px;top:42px;width:56px;height:56px;border-radius:50%;background:rgba(230,215,180,.55);box-shadow:0 0 12px rgba(0,0,0,.6)}
+#stick.run #knob{background:rgba(220,90,60,.75)}
+#hudR{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));z-index:7;display:grid;grid-template-columns:auto auto;grid-template-areas:"run act" "crouch act" "jump act";gap:12px;align-items:end}
+#hudR button,#hudT button{border-radius:50%;border:2px solid rgba(220,200,160,.35);background:rgba(12,8,6,.5);color:#ecdcb4;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:20px/1 Georgia,serif;padding:0}
+#hudR button small,#hudT button small{font-size:9px;letter-spacing:.5px;opacity:.75}
+#hudR button.on,#hudT button.on{border-color:#d0a050;background:rgba(90,45,10,.6)}
+#bRun{grid-area:run;width:58px;height:58px}#bCrouch{grid-area:crouch;width:58px;height:58px}#bJump{grid-area:jump;width:58px;height:58px}
+#bAct{grid-area:act;width:86px;height:86px;font-size:30px!important;opacity:.35;transition:opacity .15s,border-color .15s}
+#bAct.on{opacity:1;border-color:#f0c878!important;box-shadow:0 0 18px rgba(240,200,120,.35)}
+#hudT{position:absolute;right:calc(14px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));z-index:7;gap:10px}
+#hudT button{width:48px;height:48px;font-size:18px}
+#pauseB{position:absolute;left:calc(12px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));z-index:7;width:42px;height:42px;border-radius:50%;border:2px solid rgba(220,200,160,.3);background:rgba(12,8,6,.5);color:#ecdcb4;font-size:16px}
+body.touch #prompt{top:auto;left:auto;right:calc(18px + env(safe-area-inset-right));bottom:calc(112px + 3*70px - 120px);transform:none;max-width:46vw}
+#inv{top:calc(66px + env(safe-area-inset-top))}
+body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));margin-left:0;width:26%}
+#pause{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(0,0,0,.78);z-index:15}
+#pause.on{display:flex}#pause h3{margin:0;color:#c8a860;letter-spacing:3px;font-weight:normal}
+#pause button.big{background:none;border:1px solid #7a2020;color:#e8c890;font:15px Georgia,serif;padding:10px 30px;letter-spacing:2px}
 </style>
 </head>
 <body>
+<div id="root">
 <canvas id="cv"></canvas>
+<div id="stickZone"><b>MOVER</b></div>
 <div id="hideV"></div>
 <div id="cross"></div>
 <div id="prompt"></div>
 <div id="msg"></div>
 <div id="inv"></div>
 <div id="stamW"><div id="stam"></div></div>
+<div id="blood"></div>
 <div id="fade"></div>
 <div id="debug"></div>
 <div id="note"><div><b id="noteT"></b><span id="noteB"></span></div></div>
 <div id="stick"><div id="knob"></div></div>
-<div id="btns" class="tb">
-  <div class="row"><button data-act="light" title="Lanterna">🔦</button><button data-act="run" title="Correr">🏃</button></div>
-  <div class="row"><button data-act="crouch" title="Agachar">⤓</button><button id="bAct" data-act="interact" title="Interagir">✋</button></div>
+<button id="pauseB" class="tb" data-act="pause" title="Pausar">❚❚</button>
+<div id="hudT" class="tb"><button data-act="light" title="Lanterna">🔦<small>LUZ</small></button></div>
+<div id="hudR" class="tb">
+  <button id="bRun" data-act="run" title="Correr">🏃<small>CORRER</small></button>
+  <button id="bCrouch" data-act="crouch" title="Agachar">⤓<small>AGACHAR</small></button>
+  <button id="bJump" data-act="jump" title="Pular">⤒<small>PULAR</small></button>
+  <button id="bAct" data-act="interact" title="Interagir">✋</button>
 </div>
+<div id="pause"><h3>PAUSADO</h3><button class="big" id="resume">CONTINUAR</button><div id="gfx2"></div></div>
 <div id="splash">
   <h2>Gran Circo Estrela · 1987</h2>
   <h1>O Último Espetáculo</h1>
   <div id="barW"><div id="bar"></div></div>
   <div id="loadSt">Carregando…</div>
+  <div id="chars"></div>
   <div id="gfx"><span>Gráficos</span><button data-q="suave">Suave</button><button data-q="padrao">Padrão</button><button data-q="alto">Alto</button><span class="sep"></span><button data-f="30">30 FPS</button><button data-f="60">60 FPS</button></div>
   <button id="start">ENTRAR</button>
-  <div id="help">PC: WASD andar · mouse olhar · Shift correr · C agachar · E interagir/esconder · F lanterna · F3 desempenho · V espectador<br>Celular: lado esquerdo anda, lado direito olha, botões à direita.</div>
+  <div id="help">PC: WASD andar · mouse olhar · Shift correr · C agachar · E interagir/esconder · F lanterna · Espaço pular · F3 desempenho · V espectador<br>Celular: toque no lado esquerdo para o analógico (leve até a borda para correr), arraste no resto da tela para olhar.</div>
+</div>
 </div>
 <script src="vendor/three.min.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
@@ -103,6 +138,7 @@ body.touch .tb{display:flex}
 <script src="src/engine/enemy.js"></script>
 <script src="src/engine/sectors.js"></script>
 <script src="src/engine/models.js"></script>
+<script src="src/engine/mirrors.js"></script>
 <script src="src/map/arch.js"></script>
 <script src="src/map/props.js"></script>
 <script src="src/map/map.js"></script>
