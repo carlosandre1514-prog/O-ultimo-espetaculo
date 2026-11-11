@@ -16,7 +16,7 @@ for b in bins:
 boot = """<script>
 /* Artefato: os binários (.glb/.bin) vêm como base64 em .txt e são decodificados SOB DEMANDA (só o que o jogo pede:
    o personagem escolhido, não os seis). */
-window.OE_ASSETS = window.OE_ASSETS || {};
+window.OE_ASSETS = window.OE_ASSETS || {}; window.OE_ARTIFACT = true;  // aqui não há WebRTC: online só no APK
 const OE_B64 = new Set(%s), OE_LAZY = {};
 window.OE_ASSET_LAZY = p => { if (!OE_B64.has(p)) return Promise.resolve(p); return OE_LAZY[p] || (OE_LAZY[p] = fetch('dist/b64/' + p + '.txt').then(r => r.text()).then(t => {
   const b = atob(t), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return URL.createObjectURL(new Blob([u], { type: 'application/octet-stream' })); })); };

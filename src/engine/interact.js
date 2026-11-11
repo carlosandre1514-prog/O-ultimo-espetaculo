@@ -94,13 +94,13 @@
       if (this.lock === 'sealed') { OE.Audio.play('locked', this.pos, 1); OE.UI.msg('Não abre. É como se alguém segurasse do outro lado.'); return; }
       if (this.lock && this.lock.startsWith('code:')) { OE.Story.keypad(this, this.lock.slice(5)); return; }
       if (this.lock === 'bolt') {
-        if (this.side(P.pos) === this.boltSide) { this.lock = null; OE.Audio.play('click', this.pos); OE.UI.msg('Ferrolho aberto. Atalho liberado.'); }
+        if (this.side(P.pos) === this.boltSide) { this.lock = null; this._net(); OE.Audio.play('click', this.pos); OE.UI.msg('Ferrolho aberto. Atalho liberado.'); }
         else { OE.Audio.play('locked', this.pos, 0.8); OE.UI.msg('Trancada pelo outro lado.'); }
         return;
       }
       if (this.lock && this.lock.startsWith('key:')) {
         const k = this.lock.slice(4);
-        if (OE.state.items.has(k)) { this.lock = null; OE.Audio.play('click', this.pos); OE.UI.msg('Destrancada com ' + OE.ITEMS[k] + '.'); OE.emit('navChanged'); }
+        if (OE.state.items.has(k)) { this.lock = null; this._net(); OE.Audio.play('click', this.pos); OE.UI.msg('Destrancada com ' + OE.ITEMS[k] + '.'); OE.emit('navChanged'); }
         else { OE.Audio.play('locked', this.pos, 0.8); OE.UI.msg('Trancada. Precisa de: ' + OE.ITEMS[k]); }
         return;
       }
@@ -110,7 +110,7 @@
     toggle(from, who) {
       if (this.open) return this.close(who);
       if (!this.fixedSwing && from) this.opens = this.side(from) * (-this.hinge);
-      this.target = this.maxAng; this.open = true; this._sound(who);
+      this.target = this.maxAng; this.open = true; this._sound(who); this._net();
     }
     close(who) {
       // não fecha em cima de alguém
@@ -118,8 +118,9 @@
       const blockedBy = p => Math.hypot(p.x - this.hx, p.z - this.hz) < this.w + 0.35;
       if (blockedBy(P.pos) && !P.hidden && who !== 'player-force') { if (Math.hypot(P.pos.x - this.x, P.pos.z - this.z) < 0.75) return false; }
       if (E && blockedBy(E.pos) && who !== 'enemy') return false;
-      this.target = 0; this.open = false; this._sound(who); return true;
+      this.target = 0; this.open = false; this._sound(who); this._net(); return true;
     }
+    _net() { if (OE.Net && OE.Net.on) OE.Net.event({ k: 'door', i: OE.doors.indexOf(this), open: this.open, lock: this.lock, dir: this.opens }); }
     _sound(who) {
       OE.Audio.play(this.kind === 'metal' || this.kind === 'cage' || this.kind === 'bars' ? 'metal' : 'door', this.pos, this.kind === 'stall' ? 0.4 : 0.8);
       if (who === 'player') OE.emit('noise', { pos: this.pos.clone(), radius: this.kind === 'metal' || this.kind === 'cage' ? 13 : 9, source: 'door' });
@@ -152,7 +153,7 @@
       if (this.lock) { OE.Audio.play('locked', this.pos); OE.UI.msg(this.lockMsg || 'Está preso.'); return; }
       this.setOpen(this.target < 0.5, 'player');
     }
-    setOpen(v, who) { this.target = v ? 1 : (this.closedAt || 0); OE.Audio.play('metal', this.pos, 0.9); if (who === 'player') OE.emit('noise', { pos: this.pos.clone(), radius: 18, source: 'gate' }); }
+    setOpen(v, who) { if (OE.Net && OE.Net.on && !OE.Net.applying) OE.Net.event({ k: 'door', i: OE.doors.indexOf(this), open: v, lock: this.lock }); this.target = v ? 1 : (this.closedAt || 0); OE.Audio.play('metal', this.pos, 0.9); if (who === 'player') OE.emit('noise', { pos: this.pos.clone(), radius: 18, source: 'gate' }); }
     toggle(from, who) { this.setOpen(!this.open, who); }
     _apply() {
       const amt = this.amount * this.t;
@@ -181,7 +182,7 @@
     }
     label() { return this.target ? (this.item ? 'Pegar ' + OE.ITEMS[this.item] : 'Fechar ' + this.name) : 'Abrir ' + this.name; }
     use() {
-      if (this.target && this.item) { OE.state.items.add(this.item); OE.UI.msg('Você pegou: ' + OE.ITEMS[this.item]); OE.UI.inventory(); OE.Audio.play('click', this.pos);
+      if (this.target && this.item) { OE.giveItem(this.item); OE.UI.msg('Você pegou: ' + OE.ITEMS[this.item]); OE.UI.inventory(); OE.Audio.play('click', this.pos);
         this.item = null; this._rebuildEmpty(); return; }
       this.target = this.target ? 0 : 1; OE.Audio.play('click', this.pos, 0.5); OE.emit('noise', { pos: this.pos.clone(), radius: 3, source: 'drawer' });
     }
@@ -225,7 +226,7 @@
     use() {
       if (this.on) return;
       if (!OE.state.items.has('fusivel')) { OE.Audio.play('locked', this.pos); OE.UI.msg('O gerador precisa de um fusível.'); return; }
-      this.on = true; OE.state.power = true; OE.Audio.play('generator', this.pos, 1);
+      this.on = true; OE.state.power = true; OE.Net && OE.Net.event({ k: 'power' }); OE.Audio.play('generator', this.pos, 1);
       OE.UI.msg('O gerador ligou. As luzes voltam... e ele com certeza ouviu.', 5);
       OE.emit('noise', { pos: this.pos.clone(), radius: 60, source: 'generator' }); OE.emit('power', true);
     }
@@ -292,13 +293,15 @@
   OE.MusicBox = MusicBox;
 
   /* ---------------- Item no chão / Bilhete ---------------- */
+  // item para o grupo (no online, todos recebem)
+  OE.giveItem = id => { OE.state.items.add(id); OE.Net && OE.Net.event({ k: 'item', id, nome: OE.game && OE.game.character ? OE.game.character.nome : '' }); };
   OE.ITEMS = { fusivel: 'Fusível', chave_camarim: 'Chave do Camarim 2', chave_subsolo: 'Chave do Subsolo', chave_deposito: 'Chave do Depósito', chave_portao: 'Chave do Cadeado' };
   class Pickup {
     constructor(o) { Object.assign(this, o); this.pos = new THREE.Vector3(this.x, this.y + 0.05, this.z);
       this.mesh = partMesh(b => b.box(OE.MAT.chrome, 0, 0, 0, 0.1, 0.02, 0.035)); this.mesh.position.copy(this.pos); this.mesh.rotation.y = 0.7; this.mesh.updateMatrix(); this.mesh.matrixAutoUpdate = false; OE.addDyn(this.mesh);
       OE.Interact.add(this); this.radius = 1.5; }
     label() { return 'Pegar ' + OE.ITEMS[this.item]; }
-    use() { OE.state.items.add(this.item); OE.UI.msg('Você pegou: ' + OE.ITEMS[this.item]); OE.UI.inventory(); this.enabled = false; this.mesh.visible = false; OE.Audio.play('click', this.pos); }
+    use() { OE.giveItem(this.item); OE.UI.msg('Você pegou: ' + OE.ITEMS[this.item]); OE.UI.inventory(); this.enabled = false; this.mesh.visible = false; OE.Audio.play('click', this.pos); }
   }
   OE.Pickup = Pickup;
   class Note {

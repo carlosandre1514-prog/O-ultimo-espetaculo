@@ -66,6 +66,15 @@ aplica ferrugem e sujeira no shader. Brinquedos: **montanha-russa** (trem parado
 carrinho descarrilado), **barco viking**, **chapéu mexicano**, **xícaras malucas**, **torre de queda** (30 m),
 **trenzinho infantil** e **tobogã gigante** — além de roda-gigante, carrossel, bate-bate e Trem Fantasma.
 
+## Online (cooperativo, até 6)
+Na tela inicial: **CRIAR SALA ONLINE** gera um código de 4 letras; os amigos digitam o código e tocam em **ENTRAR NA
+SALA**; o anfitrião toca em **COMEÇAR PARTIDA**. Cada um joga com um adolescente diferente (se dois escolherem o mesmo,
+o segundo recebe outro). Conexão P2P (WebRTC) via PeerJS, com o serviço público de apresentação do PeerJS (sem conta).
+O anfitrião roda a IA do Mestre de Cerimônias, que caça o jogador visível mais próximo; portas, itens, gerador,
+documentos, final e mortes são compartilhados — quem é pego vê a morte em 1ª pessoa, os outros em 3ª.
+Teste: `node tests/coop.mjs` (servidor PeerJS local + dois navegadores). Funciona no APK e no navegador; não no
+artefato do Claude, que bloqueia WebRTC. Redes móveis muito restritivas podem impedir a conexão direta (sem TURN).
+
 ## História e cinemática
 - **Cinemática de abertura** (`src/cinematic.js`, ~45 s, no motor, com os 6 adolescentes): a estrada à noite, o grupo
   chega, falas diante do portão aberto, a caixinha toca e uma silhueta de cartola aparece na praça, o protagonista

@@ -64,6 +64,7 @@
       this.running = true; OE.Audio.init(); if (OE.Audio.ctx && OE.Audio.ctx.state !== 'running') OE.Audio.ctx.resume();
       this.last = performance.now(); requestAnimationFrame(t => this.loop(t));
       // abertura: cinemática com os personagens (ou o texto, se os modelos não existirem)
+      if (this.coop) { const k = OE.Net.roster.findIndex(r => r.id === OE.Net.me); this.player.teleport(-2.5 + (k % 3) * 2.5, 0, 96 - Math.floor(k / 3) * 1.6, 0); OE.Story.startCoop(); return; }
       OE.Cine.play(ok => { if (ok) { this.paused = false; OE.Story.startAfterCine(); } else { this.paused = true; OE.Audio.theme(0.22); OE.Story.intro(() => { this.paused = false; OE.Story.start(); }); } });
     }
     async setCharacter(id) {
@@ -150,7 +151,9 @@
       }
       for (const u of this.updatables) u.update(dt, P);
       for (const t of OE.noiseTraps) t.update(dt, P);
-      if (this.enemy && !this.dying && !this.enemyOff) this.enemy.update(dt);
+      if (this.enemy && this.enemyRemote) OE.Net.driveEnemy(dt);
+      else if (this.enemy && !this.dying && !this.enemyOff) this.enemy.update(dt);
+      OE.Net.tick(dt);
       OE.Story.update(dt, P); OE.Director.update(dt, this);
       OE.Lights.update(dt, this.camera, P.spectator ? this.camera.position : P.pos);
       P.flashOn = this.flashOn; OE.Lights.updateTorch(dt, P); OE.Avatar.update(dt, P); OE.Mirrors.update(this.camera);
@@ -204,6 +207,12 @@
       $('start').classList.add('on'); st.textContent = 'Toque para entrar';
       OE.ready = true;
     } catch (e) { console.error(e); st.textContent = 'Erro: ' + e.message; OE.loadError = e; }
+    // online
+    const lobby = $('lobby');
+    if (window.OE_ARTIFACT) { ['netCreate', 'netJoin'].forEach(id => $(id).addEventListener('click', e => { e.stopImmediatePropagation(); $('lobby').classList.add('on'); OE.Net.status('O modo online funciona no app (APK). Aqui, jogue sozinho.'); }, true)); }
+    $('netCreate').addEventListener('click', async () => { if (!OE.ready) return; OE.Audio.init(); lobby.classList.add('on'); OE.Net.status('Criando sala…'); try { await OE.Net.create(); } catch (e) {} });
+    $('netJoin').addEventListener('click', async () => { if (!OE.ready) return; const c = $('netCode').value.trim(); if (c.length !== 4) { lobby.classList.add('on'); OE.Net.status('Digite o código de 4 letras da sala.'); return; } OE.Audio.init(); lobby.classList.add('on'); OE.Net.status('Entrando na sala ' + c.toUpperCase() + '…'); try { await OE.Net.join(c); } catch (e) {} });
+    $('netGo').addEventListener('click', () => { if (OE.Input.touch || matchMedia('(pointer: coarse)').matches) OE.Input.lockLandscape(); OE.Net.begin(); });
     $('resume').addEventListener('click', () => { g.setPause(false); if (!OE.Input.touch && $('cv').requestPointerLock) $('cv').requestPointerLock(); });
     $('start').addEventListener('click', () => { if (!OE.ready) return;
       if (OE.Input.touch || matchMedia('(pointer: coarse)').matches) { OE.Input.lockLandscape(); document.body.classList.add('hint'); setTimeout(() => document.body.classList.remove('hint'), 7000); } $('splash').classList.add('off'); g.start(); if (!OE.Input.touch && !OE.noPointerLock) $('cv').requestPointerLock && $('cv').requestPointerLock(); });

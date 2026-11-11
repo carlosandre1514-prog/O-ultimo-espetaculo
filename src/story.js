@@ -33,7 +33,7 @@
     const d = St.docs.get(id); if (!d) return; const first = !St.found.has(id); St.found.add(id);
     if (d.kind === 'gravação') OE.Audio.play('tape', null, 1);
     OE.UI.note((d.kind === 'gravação' ? '▶ ' : '') + d.title, d.text);
-    if (first) { St.renderJournal(); St.onFound(id); }
+    if (first) { St.renderJournal(); St.onFound(id); OE.Net && OE.Net.event({ k: 'doc', id }); }
   };
   St.renderJournal = function () {
     const e = $('journal'); if (!e) return;
@@ -91,14 +91,14 @@
   };
   // caixinha original (sala secreta) e final
   St.pickBox = function () {
-    OE.state.items.add('caixinha'); OE.ITEMS.caixinha = 'Caixinha de música original'; OE.UI.inventory();
+    OE.ITEMS.caixinha = 'Caixinha de música original'; OE.giveItem('caixinha'); OE.UI.inventory();
     St.setChapter(3, OE.state.power ? 'Leve a caixinha ao picadeiro e quebre-a' : 'Ligue o gerador: o picadeiro precisa de luz');
     OE.Audio.play('sting', null, 1); OE.UI.msg('A caixinha está quente. A melodia toca sozinha dentro dela.', 4);
   };
   St.ringReady = () => OE.state.items.has('caixinha') && !St.final;
-  St.breakBox = function () {
-    if (!OE.state.power) { OE.UI.msg('Está escuro demais. O espetáculo só termina com as luzes acesas.', 3); return; }
-    St.final = { t: 0 }; OE.state.items.delete('caixinha'); OE.UI.inventory(); St.setChapter(4, 'FUJA PELO PORTÃO PRINCIPAL!');
+  St.breakBox = function (remote) {
+    if (!remote && !OE.state.power) { OE.UI.msg('Está escuro demais. O espetáculo só termina com as luzes acesas.', 3); return; }
+    St.final = { t: 0 }; OE.state.items.delete('caixinha'); if (!remote) OE.Net && OE.Net.event({ k: 'final' }); OE.UI.inventory(); St.setChapter(4, 'FUJA PELO PORTÃO PRINCIPAL!');
     OE.Audio.play('crack', null, 1); OE.Audio.play('laugh', null, 1.4);
     OE.Lights.emitters.forEach(e => { if (e.group === 'tenda' || e.mode === 'cycle') e.mode = 'strobe'; });
     OE.doors.filter(d => d.name === 'portão').forEach(g => { g.lock = null; g.toggle({ x: 0, z: 103 }, 'story'); });
@@ -112,6 +112,7 @@
     if (P.pos.z > 101.5 && !St.ended) St.ending(true);
   };
   St.ending = function (good) {
+    if (good) OE.Net && OE.Net.event({ k: 'end', good });
     St.ended = true; OE.game.paused = true; const e = $('ending');
     $('endT').textContent = good ? 'O ESPETÁCULO FOI INTERROMPIDO' : 'AGORA VOCÊ FAZ PARTE DO ESPETÁCULO';
     $('endB').textContent = good ? 'Do lado de fora, o silêncio é absoluto. Atrás de você, as luzes da lona se apagam uma a uma.\nPela primeira vez desde 1987, a música não volta a tocar.\n\nOu quase.' : 'Você acorda na fileira 7, cadeira 4. A plateia inteira olha para o picadeiro.\nO Mestre de Cerimônias faz uma reverência.\n\nO último espetáculo ainda não terminou.';
@@ -133,6 +134,12 @@
     St.found.add('carta'); St.renderJournal(); St.flags.trapped = true;
     St.objective('Seus amigos sumiram. Encontre uma saída e descubra a verdade');
     OE.UI.msg('Eles estavam aqui um segundo atrás.', 4);
+  };
+  // online: todos entram juntos; o portão se fecha atrás do grupo
+  St.startCoop = function () {
+    St.found.add('carta'); St.renderJournal(); St.trap(true);
+    St.objective('O portão se fechou atrás de vocês. Fiquem juntos e encontrem uma saída');
+    OE.UI.msg('Uma caixinha de música toca lá dentro. Ninguém se separa.', 4); OE.Audio.play('musicbox', { x: 0, y: 2, z: 60 }, 0.9);
   };
   St.start = function () {
     St.found.add('carta'); St.renderJournal();

@@ -22,6 +22,13 @@ html,body{margin:0;height:100%;background:#000;color:#e8dcc4;font:14px/1.35 Geor
 #loadSt{color:#8a7a60;font-size:13px;min-height:18px}
 #start{display:none;background:none;border:1px solid #7a2020;color:#e8c890;font:16px Georgia,serif;padding:12px 34px;letter-spacing:3px;cursor:pointer}
 #start.on{display:block}
+#startRow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+#startRow .sec,#netGo{background:none;border:1px solid #4a3a2a;color:#c8b088;font:13px Georgia,serif;padding:10px 16px;letter-spacing:1px;cursor:pointer}
+.joinBox{display:flex;gap:6px}#netCode{width:84px;background:#120c08;border:1px solid #4a3a2a;color:#f0d8a0;font:15px monospace;text-align:center;text-transform:uppercase;letter-spacing:3px;user-select:text;-webkit-user-select:text}
+#lobby{display:none;flex-direction:column;align-items:center;gap:8px}#lobby.on{display:flex}
+#netSt{color:#c8a860;font:14px Georgia,serif}#netList{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#netList span{border:1px solid #4a3a2a;padding:4px 10px;color:#d8c8a0;font:13px Georgia,serif}#netList span.me{border-color:#a02020}
+#netGo{border-color:#a02020;color:#f0d8a0}
 #chars{display:none;gap:8px;overflow-x:auto;max-width:94vw;padding:4px 2px;scrollbar-width:none}
 #chars.on{display:flex}#chars::-webkit-scrollbar{display:none}
 .char{flex:0 0 auto;width:118px;display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(20,10,8,.6);border:1px solid #3a2a1a;color:#d8c8a0;font:12px Georgia,serif;padding:6px;cursor:pointer;text-align:center}
@@ -145,12 +152,14 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
   <div id="loadSt">Carregando…</div>
   <div id="chars"></div>
   <div id="gfx"><span>Gráficos</span><button data-q="suave">Suave</button><button data-q="padrao">Padrão</button><button data-q="alto">Alto</button><span class="sep"></span><button data-f="30">30 FPS</button><button data-f="60">60 FPS</button></div>
-  <button id="start">ENTRAR</button>
+  <div id="startRow"><button id="start">ENTRAR</button><button id="netCreate" class="sec">CRIAR SALA ONLINE</button><span class="joinBox"><input id="netCode" maxlength="4" placeholder="CÓDIGO" autocomplete="off"><button id="netJoin" class="sec">ENTRAR NA SALA</button></span></div>
+  <div id="lobby"><div id="netSt"></div><div id="netList"></div><button id="netGo">COMEÇAR PARTIDA</button></div>
   <div id="help">PC: WASD andar · mouse olhar · Shift correr · C agachar · E interagir/esconder · F lanterna · Espaço pular · F3 desempenho · V espectador<br>Celular: toque no lado esquerdo para o analógico (leve até a borda para correr), arraste no resto da tela para olhar.</div>
 </div>
 </div>
 <script src="vendor/three.min.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/peerjs.min.js"></script>
 <script src="src/engine/core.js"></script>
 <script src="src/engine/quality.js"></script>
 <script src="src/engine/textures.js"></script>
@@ -181,6 +190,7 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
 <script src="src/story.js"></script>
 <script src="src/cinematic.js"></script>
 <script src="src/director.js"></script>
+<script src="src/net.js"></script>
 <script src="src/game.js"></script>
 </body>
 </html>

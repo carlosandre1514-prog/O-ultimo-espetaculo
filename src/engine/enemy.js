@@ -132,7 +132,7 @@
       if (path) { this.path = path; this.pi = 0; this.goal = p.clone ? p.clone() : new THREE.Vector3(p.x, p.y, p.z); } else { this.path = null; }
     }
     pickPatrol() {
-      const P = OE.game.player.pos, nodes = OE.Nav.nodes; let n;
+      const P = (this.target || OE.game.player).pos, nodes = OE.Nav.nodes; let n;
       // persegue sem saber: prefere a região onde o jogador está
       for (let k = 0; k < 20; k++) { n = nodes[(Math.random() * nodes.length) | 0]; if (n.crawl) continue; const d = Math.hypot(n.x - P.x, n.z - P.z); if (Math.random() < 0.55 ? d < 40 : true) break; }
       this.goTo(n.p);
@@ -141,7 +141,7 @@
       if (P.hidden || P.spectator) return false;
       if (this.pos.distanceTo(P.pos) < 2.6 && Math.abs(P.pos.y - this.pos.y) < 1.2) return true;   // sente quem está colado nele
       const eye = tmp.set(this.pos.x, this.pos.y + (this.eyeH || 1.9), this.pos.z), d = eye.distanceTo(P.cam.position);
-      const lit = OE.game.flashOn ? 1 : (OE.Lights.zone && OE.Lights.zone.name === 'exterior' ? 0.75 : 0.55);
+      const lit = (P.local === false ? P.flashOn : OE.game.flashOn) ? 1 : (OE.Lights.zone && OE.Lights.zone.name === 'exterior' ? 0.75 : 0.55);
       const range = (P.crouch ? 0.7 : 1) * (this.state === 'chase' ? 32 : 26) * lit;
       if (d > range) return false;
       const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), dx = P.pos.x - this.pos.x, dz = P.pos.z - this.pos.z, dl = Math.hypot(dx, dz) || 1;
@@ -151,7 +151,7 @@
     }
     update(dt) {
       if (!this.enabled) return;
-      const G = OE.game, P = G.player;
+      const G = OE.game, P = this.pickTarget();
       // percepção a cada 0,1 s
       this.percT = (this.percT || 0) - dt;
       if (this.percT <= 0) {
@@ -178,13 +178,13 @@
           if (this.repath <= 0) { this.repath = 1; const pred = this.lastSeen ? this.lastSeen.clone().addScaledVector(this.lastVel || new THREE.Vector3(), Math.min(2, this.lostT + 0.8)) : P.pos; this.goTo(pred); }
           if (this.lostT > 5) { this.startSearch(this.lastSeen || P.pos); OE.emit('chase', false); }
         }
-        if (this.pos.distanceTo(P.pos) < 1.05 && Math.abs(P.pos.y - this.pos.y) < 1) return this.grab();
+        if (this.pos.distanceTo(P.pos) < 1.05 && Math.abs(P.pos.y - this.pos.y) < 1) return this.grab(P);
       } else if (this.state === 'searchSpot') {
         speed = SPEED.chase * 0.8;
         const s = this.searchSpot; if (!s) { this.state = 'patrol'; }
         else if (Math.hypot(this.pos.x - s.entry.x, this.pos.z - s.entry.z) < 1.0) {
           this.faceTo(s.x, s.z, dt);
-          this.wait += dt; if (this.wait > 1.2) { this.wait = 0; if (s.occupied) { OE.Hiding.forceOut(); return this.grab(); } this.searchSpot = null; this.startSearch(this.pos); }
+          this.wait += dt; if (this.wait > 1.2) { this.wait = 0; if (s.occupied) { OE.Hiding.forceOut(); return this.grab(OE.game.player); } if (s.remoteOcc) { const R = OE.Net.remotes.get(s.remoteOcc); if (R) return this.grab(R); } this.searchSpot = null; this.startSearch(this.pos); }
           speed = 0;
         }
       } else if (this.state === 'search') { speed = SPEED.search; this.updateSearch(dt); if (this.state !== 'search') speed = SPEED.patrol; }
@@ -200,7 +200,7 @@
       if (P.hidden && this.state !== 'searchSpot') {
         const s = P.hidden, d = Math.hypot(this.pos.x - s.x, this.pos.z - s.z);
         if (d < 2.6) { const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), c = ((s.x - this.pos.x) * fx + (s.z - this.pos.z) * fz) / (d || 1);
-          const chance = OE.Hiding.exposure() * (c > 0.3 ? 0.9 : 0.25) * dt * (this.suspectSpot === s ? 2.5 : 1);
+          const chance = (P.local === false ? Math.max(s.exposure, P.flashOn ? 0.9 : 0) : OE.Hiding.exposure()) * (c > 0.3 ? 0.9 : 0.25) * dt * (this.suspectSpot === s ? 2.5 : 1);
           if (Math.random() < chance) { this.searchSpot = s; this.state = 'searchSpot'; this.wait = 0; this.goTo(new THREE.Vector3(s.entry.x, s.y || 0, s.entry.z)); } }
       }
 
@@ -234,11 +234,13 @@
       if (Math.hypot(this.pos.x - s.entry.x, this.pos.z - s.entry.z) < 1.1 || !this.path) {
         this.faceTo(s.x, s.z, dt); this.inspectT += dt;
         if (this.inspectT > 1.2) { this.searchSpotCur = null;
-          if (s.occupied && Math.random() < (CHECK_CHANCE[s.cat] || 0.6) * (OE.game.flashOn ? 1.25 : 1)) { OE.Hiding.forceOut(); this.grab(); } }
+          if (s.occupied && Math.random() < (CHECK_CHANCE[s.cat] || 0.6) * (OE.game.flashOn ? 1.25 : 1)) { OE.Hiding.forceOut(); this.grab(OE.game.player); }
+          else if (s.remoteOcc && Math.random() < (CHECK_CHANCE[s.cat] || 0.6)) { const R = OE.Net.remotes.get(s.remoteOcc); if (R) this.grab(R); } }
       }
     }
     // toca uma ação por cima das outras (grito, agarrar, facada); devolve a duração do clipe
     playOnce(name, speed) {
+      this.oneShotName = name; setTimeout(() => { if (this.oneShotName === name) this.oneShotName = null; }, 1500);
       const a = this.actions && this.actions[name]; if (!a) return 0;
       this.oneShot = a; a.reset(); a.timeScale = speed || 1; a.setEffectiveWeight(1); a.play();
       return a.getClip().duration / (speed || 1);
@@ -274,11 +276,29 @@
       if (prev) { const L = Math.hypot(t.x - prev.x, t.z - prev.z) || 1, k = OE.clamp(1 - Math.hypot(t.x - this.pos.x, t.z - this.pos.z) / L, 0, 1); this.pos.y = OE.lerp(prev.y, ny, k); }
       this.moved = st; return false;
     }
-    grab() {
-      this.state = 'grab'; this.path = null; OE.emit('chase', false); OE.emit('caught');
+    // Agarra a vítima: se for eu, sequência em 1ª pessoa; se for outro jogador (online), todos veem em 3ª pessoa.
+    grab(P) {
+      P = P || OE.game.player; this.path = null; OE.emit('chase', false);
+      if (P.local === false) {
+        this.state = 'grab'; this.aware = 0; this.target = null; const dx = P.pos.x - this.pos.x, dz = P.pos.z - this.pos.z, d = Math.hypot(dx, dz) || 1;
+        this.yaw = Math.atan2(dx, dz); this.pos.set(P.pos.x - dx / d * 0.9, P.pos.y, P.pos.z - dz / d * 0.9);
+        this.playOnce('grab'); setTimeout(() => this.playOnce('stab'), 2000); setTimeout(() => { this.stopOnce(); this.state = 'patrol'; this.wait = 3; }, 6500);
+        OE.Net.event({ k: 'kill', victim: P.id }); OE.Net.onKill({ victim: P.id }); P.dead = true; return;
+      }
+      this.state = 'grab'; OE.emit('caught');
+    }
+    // Escolhe a vítima: mantém quem está perseguindo; senão o jogador visível mais próximo; senão o mais próximo
+    pickTarget() {
+      const list = OE.Net ? OE.Net.targets() : [OE.game.player];
+      if (this.target && list.indexOf(this.target) >= 0 && (this.state === 'chase' || this.state === 'searchSpot') && OE.state.time - this.visibleT < 4) return this.target;
+      this.pickT = (this.pickT || 0) - 0.016;
+      if (this.pickT > 0 && this.target && list.indexOf(this.target) >= 0) return this.target;
+      this.pickT = 0.4; let best = null, bd = 1e9, near = null, nd = 1e9;
+      for (const P of list) { if (P.dead) continue; const d = this.pos.distanceTo(P.pos); if (d < nd) { nd = d; near = P; } if (d < bd && this.canSee(P)) { bd = d; best = P; } }
+      this.target = best || near || OE.game.player; return this.target;
     }
     animate(dt, speed) {
-      const moving = this.moved > 0 ? 1 : 0; this.moved = 0;
+      const moving = this.moved > 0 ? 1 : 0; this.moved = 0; this.lastSpeed = moving ? speed : 0;
       this.phase += dt * (moving ? 2.2 + speed * 1.4 : 0); const amp = moving ? Math.min(0.55, 0.18 + speed * 0.1) : 0;
       if (this.mixer) {   // esqueleto: mistura parado / andar / correr pela velocidade
         const busy = this.oneShot && this.oneShot.isRunning(), run = !busy && moving && speed > 2.6, walk = !busy && moving && !run, k = Math.min(1, dt * 6);
