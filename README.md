@@ -6,6 +6,12 @@ também sai em **um único arquivo HTML** que abre direto no celular.
 
 Tecnologia: **Three.js r128** (o mesmo do MiniBlender), sem nenhum download de textura: tudo é gerado na carga.
 
+## APK (Android)
+A cada envio para o GitHub, o workflow **Gerar APK** (`.github/workflows/android.yml`) compila o app e publica o
+`.apk` na página **Releases** do repositório. No celular: abra Releases, baixe o `.apk` mais recente e permita
+"instalar apps desconhecidos". O app (`android/`) é uma casca nativa com WebView: abre direto na horizontal, em tela
+cheia, com o jogo inteiro embutido (funciona sem internet); o botão voltar pausa.
+
 ## Rodar
 
 ```bash

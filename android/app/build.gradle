@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+// O jogo (HTML/JS/modelos) é copiado para dentro do APK a cada build: o app funciona offline.
+def webOut = layout.buildDirectory.dir('generated/webAssets')
+tasks.register('copyWebGame', Copy) {
+    from(rootProject.file('..')) {
+        include 'index.html', 'icon.svg', 'manifest.webmanifest'
+        include 'src/**', 'vendor/**', 'assets/**'
+        exclude 'assets/models/**/tasks.json', 'assets/models/meshy_tasks.json', 'assets/models/brinquedos/rides.json'
+    }
+    into webOut.map { it.dir('www') }
+}
+preBuild.dependsOn 'copyWebGame'
+
+android {
+    namespace 'com.ultimoespetaculo.jogo'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.ultimoespetaculo.jogo'
+        minSdk 24
+        targetSdk 34
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger())
+        versionName "1.0." + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
+    }
+    sourceSets { main { assets.srcDirs += [webOut] } }
+    aaptOptions { noCompress 'glb', 'bin', 'jpg', 'png' }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.debug }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    kotlinOptions { jvmTarget = '17' }
+}
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

@@ -203,6 +203,6 @@
     $('resume').addEventListener('click', () => { g.setPause(false); if (!OE.Input.touch && $('cv').requestPointerLock) $('cv').requestPointerLock(); });
     $('start').addEventListener('click', () => { if (!OE.ready) return;
       if (OE.Input.touch || matchMedia('(pointer: coarse)').matches) { OE.Input.lockLandscape(); document.body.classList.add('hint'); setTimeout(() => document.body.classList.remove('hint'), 7000); } $('splash').classList.add('off'); g.start(); if (!OE.Input.touch && !OE.noPointerLock) $('cv').requestPointerLock && $('cv').requestPointerLock(); });
-    if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !OE.debug) navigator.serviceWorker.register('sw.js').catch(() => {});
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !OE.debug && !/UltimoEspetaculoApp/.test(navigator.userAgent)) navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 })(window.OE);
