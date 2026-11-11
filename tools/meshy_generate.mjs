@@ -22,23 +22,34 @@ async function call(method, url, body) {
   return r.json();
 }
 async function wait(id) {
-  for (;;) { const t = await call('GET', API + '/' + id); process.stdout.write(`\r  ${id} ${t.status} ${t.progress || 0}%   `);
-    if (t.status === 'SUCCEEDED') { console.log(); return t; } if (t.status === 'FAILED' || t.status === 'CANCELED') throw new Error('tarefa ' + t.status);
+  for (;;) { const t = await call('GET', API + '/' + id); 
+    if (t.status === 'SUCCEEDED') return t; if (t.status === 'FAILED' || t.status === 'CANCELED') throw new Error('tarefa ' + t.status);
     await new Promise(r => setTimeout(r, 6000)); }
 }
-const names = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(ASSETS);
+// Gera tudo em paralelo; guarda os IDs em assets/models/meshy_tasks.json (retomável: rodar de novo
+// só baixa o que já foi gerado, sem gastar créditos). --download apenas baixa.
+const onlyDownload = process.argv.includes('--download');
+const names = process.argv.slice(2).filter(a => !a.startsWith('--')).length ? process.argv.slice(2).filter(a => !a.startsWith('--')) : Object.keys(ASSETS);
 fs.mkdirSync(dir, { recursive: true });
 const manPath = path.join(dir, 'manifest.json'), man = fs.existsSync(manPath) ? JSON.parse(fs.readFileSync(manPath, 'utf8')) : { props: [] };
-for (const name of names) {
-  const a = ASSETS[name]; if (!a) { console.warn('desconhecido:', name); continue; }
-  console.log('Gerando', name);
-  const prev = await call('POST', API, { mode: 'preview', prompt: a.prompt, art_style: 'realistic', topology: 'triangle', target_polycount: 12000, should_remesh: true });
-  await wait(prev.result);
-  const ref = await call('POST', API, { mode: 'refine', preview_task_id: prev.result, enable_pbr: true });
-  const done = await wait(ref.result);
-  const url = done.model_urls && done.model_urls.glb; if (!url) throw new Error('sem GLB');
-  const buf = Buffer.from(await (await fetch(url)).arrayBuffer()); fs.writeFileSync(path.join(dir, name + '.glb'), buf);
+const tPath = path.join(dir, 'meshy_tasks.json'), tasks = fs.existsSync(tPath) ? JSON.parse(fs.readFileSync(tPath, 'utf8')) : {};
+const saveT = () => fs.writeFileSync(tPath, JSON.stringify(tasks, null, 2));
+async function generate(name) {
+  const a = ASSETS[name], t = tasks[name] = tasks[name] || {};
+  if (!t.preview) { t.preview = (await call('POST', API, { mode: 'preview', prompt: a.prompt, art_style: 'realistic', topology: 'triangle', target_polycount: 12000, should_remesh: true })).result; saveT(); }
+  await wait(t.preview);
+  if (!t.refine) { t.refine = (await call('POST', API, { mode: 'refine', preview_task_id: t.preview, enable_pbr: true })).result; saveT(); }
+  await wait(t.refine); t.done = true; saveT(); console.log('gerado', name);
+}
+async function download(name) {
+  const a = ASSETS[name], t = tasks[name]; if (!t || !t.done) return false;
+  const done = await call('GET', API + '/' + t.refine), url = done.model_urls && done.model_urls.glb; if (!url) throw new Error('sem GLB');
+  const r = await fetch(url); if (!r.ok) throw new Error('download ' + r.status);
+  const buf = Buffer.from(await r.arrayBuffer()); fs.writeFileSync(path.join(dir, name + '.glb'), buf);
   man.props = (man.props || []).filter(p => p.file !== name + '.glb');
   man.props.push({ file: name + '.glb', sector: a.sector, pos: a.pos, yaw: a.yaw, height: a.height, collider: a.collider });
-  fs.writeFileSync(manPath, JSON.stringify(man, null, 2)); console.log('  ok', (buf.length / 1024).toFixed(0), 'KB');
+  fs.writeFileSync(manPath, JSON.stringify(man, null, 2)); console.log('baixado', name, (buf.length / 1024).toFixed(0), 'KB'); return true;
 }
+const valid = names.filter(n => ASSETS[n] || console.warn('desconhecido:', n));
+if (!onlyDownload) await Promise.all(valid.map(n => generate(n).catch(e => console.error('falhou', n, e.message))));
+for (const n of valid) { try { await download(n); } catch (e) { console.error('download pendente', n, '-', e.message); } }
