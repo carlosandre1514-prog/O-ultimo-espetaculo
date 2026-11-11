@@ -11,7 +11,7 @@
   const CELL = 40, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), S = new THREE.Vector3(1, 1, 1), Pv = new THREE.Vector3();
   const NM = new THREE.Matrix3(), tmpV = new THREE.Vector3(), tmpN = new THREE.Vector3();
   // struct some a 100 m (a neblina já apagou tudo); detail e clutter bem antes
-  const LOD_DIST = { struct: 100, detail: 50, clutter: 22 };
+  const LOD_DIST = { struct: OE.Q.lodStruct, detail: OE.Q.lodDetail, clutter: OE.Q.lodClutter };
   OE.LOD_DIST = LOD_DIST;
 
   function tintOf(t) {

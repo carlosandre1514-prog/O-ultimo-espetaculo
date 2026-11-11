@@ -19,13 +19,14 @@
   class Game {
     constructor() {
       const cv = $('cv');
-      this.renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
-      this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));     // resolução fixa: nada de reduzir/borrar
+      // nível de gráfico (Suave/Padrão/Alto): antisserrilhado e densidade de pixels fixos, escolhidos na carga
+      this.renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: OE.Q.aa, powerPreference: 'high-performance' });
+      this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, OE.Q.dpr));
       this.renderer.setSize(innerWidth, innerHeight);
       this.renderer.outputEncoding = THREE.sRGBEncoding; this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.15;
       this.scene = OE.scene = new THREE.Scene();
       // a neblina apaga tudo além de ~90 m: o plano distante corta antes de desenhar
-      this.camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 115); this.scene.add(this.camera);
+      this.camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, OE.Q.far); this.scene.add(this.camera);
       this.world = OE.world = new OE.CollisionWorld();
       this.player = new OE.Player(this.camera, this.world);
       this.running = false; this.paused = false; this.flashOn = false; this.checkpoint = null; this.dying = false;
@@ -79,6 +80,8 @@
     }
     loop(t) {
       requestAnimationFrame(tt => this.loop(tt));
+      // FPS travado em 30 (opção): pula quadros, poupa bateria e esquenta menos
+      if (OE.Q.fps === 30 && t - (this.lastDraw || 0) < 1000 / 31) return; this.lastDraw = t;
       let dt = (t - this.last) / 1000; this.last = t; if (dt > 0.05) dt = 0.05;
       this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(dt, 1e-3)) * 0.05 : 60;
       if (!this.paused) this.update(dt);
@@ -134,6 +137,13 @@
   // ---------------- Boot ----------------
   addEventListener('load', async () => {
     OE.Input.init($('cv'));
+    // seletor de gráficos da tela inicial (nível muda na próxima carga; FPS muda na hora)
+    const mark = () => document.querySelectorAll('#gfx button').forEach(b => b.classList.toggle('on', b.dataset.q === OE.Q.name || +b.dataset.f === OE.Q.fps));
+    document.querySelectorAll('#gfx button').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.f) { OE.Q.fps = +b.dataset.f; OE.saveQuality(OE.Q.name, OE.Q.fps); mark(); return; }
+      if (b.dataset.q !== OE.Q.name) { OE.saveQuality(b.dataset.q, OE.Q.fps); location.reload(); }
+    }));
+    mark();
     const g = new Game(), bar = $('bar'), st = $('loadSt');
     try {
       if (window.OE_ASSETS_READY) { st.textContent = 'Baixando modelos'; await window.OE_ASSETS_READY; }

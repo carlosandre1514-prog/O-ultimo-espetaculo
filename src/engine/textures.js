@@ -5,7 +5,7 @@
    reaproveitado pelo mapa inteiro; a variação por objeto vem das cores por vértice. */
 (function (OE) {
   const TEX = {};
-  const S_HI = 512, S_LO = 256;
+  const S_HI = OE.Q.tex, S_LO = Math.min(256, OE.Q.tex);   // nível de gráfico decide o tamanho
 
   function canvas(S) { const c = document.createElement('canvas'); c.width = c.height = S; return c; }
   function hex(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
@@ -282,8 +282,17 @@
      tile = metros cobertos por uma repetição da textura (UV em metros no Builder). */
   const MAT = {};
   OE.MAT = MAT;
+  // Alto: PBR (MeshStandardMaterial). Suave/Padrão: Phong (bem mais barato por pixel no celular).
   function std(name, opts) {
-    const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.9, metalness: 0 }, opts.p || {}));
+    const p = Object.assign({ vertexColors: true, roughness: 0.9, metalness: 0 }, opts.p || {});
+    if (!OE.Q.bump) { delete p.bumpMap; delete p.bumpScale; }
+    let m;
+    if (OE.Q.pbr) m = new THREE.MeshStandardMaterial(p);
+    else {
+      const rough = p.roughness, metal = p.metalness; delete p.roughness; delete p.metalness;
+      p.shininess = Math.max(2, (1 - rough) * 60); p.specular = new THREE.Color(metal > 0.3 ? 0x2a2a2a : 0x0c0c0c);
+      m = new THREE.MeshPhongMaterial(p);
+    }
     m.userData.tile = opts.tile || 2; m.name = name; MAT[name] = m; return m;
   }
   OE.buildMaterials = function (renderer) {

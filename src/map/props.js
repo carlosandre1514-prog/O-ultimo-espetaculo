@@ -355,7 +355,7 @@
   // Espalha tufos em retângulos; um InstancedMesh por célula de 24 m (culling e distância por pedaço)
   V.grass = function (def, rects, density, avoid, lodDist) {
     const r = OE.rng(def.name.length * 101 + rects.length), cells = new Map(), M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P3 = new THREE.Vector3();
-    rects.forEach(rc => { const n = Math.round((rc[2] - rc[0]) * (rc[3] - rc[1]) * density);
+    rects.forEach(rc => { const n = Math.round((rc[2] - rc[0]) * (rc[3] - rc[1]) * density * OE.Q.grass);
       for (let i = 0; i < n; i++) { const x = OE.lerp(rc[0], rc[2], r()), z = OE.lerp(rc[1], rc[3], r()); if (avoid && avoid(x, z)) continue;
         const k = Math.floor(x / 24) + ',' + Math.floor(z / 24); if (!cells.has(k)) cells.set(k, []); cells.get(k).push([x, z, r()]); } });
     const meshes = [];
@@ -366,7 +366,7 @@
       list.forEach(([x, z, s], i) => { const sc = 0.6 + s * 0.9; Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), s * 31); S.set(sc * (0.8 + s * 0.4), sc, sc); P3.set(x, 0, z); M4.compose(P3, Q, S); m.setMatrixAt(i, M4); rad = Math.max(rad, Math.hypot(x - cx, z - cz));
         m.setColorAt(i, col.setRGB(0.75 + s * 0.35, 0.8 + s * 0.2, 0.7)); });
       geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, 0.5, cz), rad + 1.5);
-      m.instanceMatrix.needsUpdate = true; m.userData = { lod: 'grass', lodDist: lodDist || 42, center: new THREE.Vector3(cx, 0.5, cz), radius: rad + 1 }; def.group.add(m); def.meshes.push(m); meshes.push(m);
+      m.instanceMatrix.needsUpdate = true; m.userData = { lod: 'grass', lodDist: lodDist || OE.Q.grassDist, center: new THREE.Vector3(cx, 0.5, cz), radius: rad + 1 }; def.group.add(m); def.meshes.push(m); meshes.push(m);
     }
     return meshes;
   };

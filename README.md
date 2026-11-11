@@ -96,6 +96,22 @@ Progressão de exemplo: chave do cadeado (guarita) → abre o portão por dentro
 alojamento) → chave do subsolo (penteadeira do camarim 2) → subsolo · chave do escritório (bancada do depósito) →
 fusível → gerador → energia (porta de enrolar, luzes, roda-gigante).
 
+### Níveis de gráfico (como nos jogos mobile de mapa grande)
+Na tela inicial: **Suave / Padrão / Alto** e **30 / 60 FPS** (fica salvo no aparelho; celular começa no Suave).
+Tudo é fixado na carga, nada muda sozinho durante o jogo.
+
+| | Suave | Padrão | Alto |
+|---|---|---|---|
+| Luzes reais ao mesmo tempo | 2 | 4 | 6 |
+| Material | Phong | Phong | PBR (Standard) |
+| Texturas / relevo | 256 px, sem relevo | 512 px, sem relevo | 512 px, com relevo |
+| Distância de visão | 72 m (neblina +35%) | 95 m | 115 m |
+| Grama | 45%, até 26 m | 75%, até 34 m | 100%, até 42 m |
+| Poeira, refletores da tenda | não | sim | sim |
+| Antisserrilhado / densidade de pixels | não / 1× | sim / 1,5× | sim / 2× |
+
+Medição no mesmo quadro (navegador sem GPU): Suave ≈ 6× mais rápido que Alto.
+
 ### Desempenho
 - Geometria estática **mesclada** por material/célula de 40 m; materiais e geometrias compartilhados.
 - **InstancedMesh** para grama, árvores e todas as lâmpadas; todos os halos de luz em **um** `THREE.Points`.

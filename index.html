@@ -21,6 +21,9 @@ html,body{margin:0;height:100%;background:#000;color:#e8dcc4;font:14px/1.35 Geor
 #loadSt{color:#8a7a60;font-size:13px;min-height:18px}
 #start{display:none;background:none;border:1px solid #7a2020;color:#e8c890;font:16px Georgia,serif;padding:12px 34px;letter-spacing:3px;cursor:pointer}
 #start.on{display:block}
+#gfx{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;max-width:92vw;font-size:12px;color:#8a7a60}
+#gfx button{background:none;border:1px solid #3a2a1a;color:#a89070;font:12px Georgia,serif;padding:6px 10px;cursor:pointer}
+#gfx button.on{border-color:#a02020;color:#f0d8a0}#gfx .sep{width:10px}
 #help{color:#6a5e4a;font-size:12px;text-align:center;max-width:520px;padding:0 16px}
 #cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:rgba(230,220,200,.55);z-index:5;pointer-events:none}
 #prompt{position:fixed;left:50%;top:58%;transform:translateX(-50%);padding:6px 14px;background:rgba(0,0,0,.55);border:1px solid rgba(200,170,110,.35);color:#e8d8b0;opacity:0;transition:opacity .15s;z-index:6;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
@@ -79,12 +82,14 @@ body.touch .tb{display:flex}
   <h1>O Último Espetáculo</h1>
   <div id="barW"><div id="bar"></div></div>
   <div id="loadSt">Carregando…</div>
+  <div id="gfx"><span>Gráficos</span><button data-q="suave">Suave</button><button data-q="padrao">Padrão</button><button data-q="alto">Alto</button><span class="sep"></span><button data-f="30">30 FPS</button><button data-f="60">60 FPS</button></div>
   <button id="start">ENTRAR</button>
   <div id="help">PC: WASD andar · mouse olhar · Shift correr · C agachar · E interagir/esconder · F lanterna · F3 desempenho · V espectador<br>Celular: lado esquerdo anda, lado direito olha, botões à direita.</div>
 </div>
 <script src="vendor/three.min.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="src/engine/core.js"></script>
+<script src="src/engine/quality.js"></script>
 <script src="src/engine/textures.js"></script>
 <script src="src/engine/builder.js"></script>
 <script src="src/engine/collision.js"></script>

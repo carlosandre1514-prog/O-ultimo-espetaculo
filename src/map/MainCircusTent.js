@@ -234,6 +234,7 @@
       },
       after(def) {
         // refletores reais (2 SpotLights fixos no pool, acendem e apagam sozinhos) + cone de luz visível
+        if (!OE.Q.spots) return;   // nível Suave: sem refletores reais na tenda
         const mk = (p, tgt, period, off) => {
           const sl = new THREE.SpotLight(0xfff0d0, 0, 40, 0.22, 0.4, 1.2); sl.position.set(p[0], p[1], p[2]); sl.target.position.set(tgt[0], 0, tgt[1]);
           OE.scene.add(sl); OE.scene.add(sl.target);

@@ -66,7 +66,7 @@
       def.group.visible = vis; def.dyn.visible = vis && (forceAll || !def.interiorRange || d < def.interiorRange);
       if (!vis) continue;
       // objetos dinâmicos (portas, gavetas, tampas) só perto da câmera
-      if (def.dyn.visible && !forceAll) for (const o of def.dyn.children) { const p = o.position; o.visible = (p.x - cx) ** 2 + (p.z - cz) ** 2 < 32 * 32 || o.userData.far; }
+      if (def.dyn.visible && !forceAll) for (const o of def.dyn.children) { const p = o.position; o.visible = (p.x - cx) ** 2 + (p.z - cz) ** 2 < 32 * 32 || (o.userData.far && (p.x - cx) ** 2 + (p.z - cz) ** 2 < OE.Q.propDist * OE.Q.propDist); }
       // detalhe preguiçoso
       if (def.detail) {
         if (!def.detailLoaded && (d < LOAD || forceAll)) S.loadDetail(def);

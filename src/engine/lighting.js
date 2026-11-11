@@ -7,7 +7,7 @@
    - Zonas: exterior noturno, interiores, tenda, subsolo — cada uma com neblina e luz ambiente.
    - Lanterna (SpotLight na câmera) e partículas de poeira nos ambientes fechados. */
 (function (OE) {
-  const POOL = 6;
+  const POOL = OE.Q.lights;          // luzes reais simultâneas: definido pelo nível de gráfico
   const L = { emitters: [], pool: [], groups: {}, zones: [], zone: null, t: 0 };
   OE.Lights = L;
   const col = new THREE.Color();
@@ -126,10 +126,10 @@
     // zona e neblina (transição suave)
     const z = L.zoneAt(playerPos); if (z !== L.zone) { L.zone = z; OE.emit('zone', z); }
     const k = Math.min(1, dt * 1.6), F = L.scene.fog;
-    F.color.lerp(col.set(z.fog), k); F.density += (z.density - F.density) * k; L.scene.background.copy(F.color);
+    F.color.lerp(col.set(z.fog), k); F.density += (z.density * OE.Q.fog - F.density) * k; L.scene.background.copy(F.color);
     L.hemi.intensity += (z.hemi - L.hemi.intensity) * k; L.moon.intensity += (z.moon - L.moon.intensity) * k;
     // poeira gira em torno da câmera
-    L.dust.visible = !!z.dust;
+    L.dust.visible = !!z.dust && OE.Q.dust;
     if (L.dust.visible) { const a = L.dust.geometry.attributes.position, c = cam.position;
       for (let i = 0; i < a.count; i++) { let x = a.getX(i), y = a.getY(i) - dt * 0.03, zz = a.getZ(i);
         x += Math.sin(t * 0.3 + i) * 0.002;
