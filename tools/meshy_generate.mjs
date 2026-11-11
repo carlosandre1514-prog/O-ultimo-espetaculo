@@ -12,7 +12,7 @@ const ASSETS = {
   cavalo_carrossel: { prompt: 'antique carousel horse, carved wood, chipped white and gold paint, rust on brass pole socket, abandoned, horror', sector: 'Parque', pos: [-58, 0.45, 13.5], yaw: 1.2, height: 1.7, collider: [1.4, 1.7, 0.4] },
   carrocinha_pipoca: { prompt: 'vintage 1980s popcorn cart, red and white, broken glass, rust, abandoned circus', sector: 'Entrada', pos: [-14, 0, 64], yaw: 0.4, height: 2.2, collider: [1.6, 2.2, 1.0] },
   estatua_palhaco: { prompt: 'life-size fiberglass clown statue holding balloons, faded paint, cracked face, creepy smile, abandoned amusement park', sector: 'Parque', pos: [-40, 0, 52], yaw: 2.4, height: 2.1, collider: [0.8, 2.1, 0.8] },
-  canhao_circo: { prompt: 'old human cannonball circus cannon on wooden wheels, red and gold paint peeling, rust', sector: 'Deposito', pos: [52, 0, -44], yaw: 0.3, height: 1.9, collider: [3.2, 1.9, 1.4] },
+  canhao_circo: { prompt: 'old human cannonball circus cannon on wooden wheels, red and gold paint peeling, rust', sector: 'Deposito', pos: [57.5, 0, -37.2], yaw: 0.3, height: 1.9, collider: [3.2, 1.9, 1.4] },
   manequim_palhaco: { prompt: 'dressmaker mannequin wearing torn clown costume with ruffled collar, dusty, horror', sector: 'Bastidores', pos: [-20.5, 0, -61], yaw: 0.8, height: 1.8, collider: [0.5, 1.8, 0.5] },
   bilheteria_placa: { prompt: 'rusty vintage circus ticket sign board on wooden post, "TICKETS", bulbs broken', sector: 'Entrada', pos: [16, 0, 104], yaw: 0, height: 2.6, collider: [1.2, 2.6, 0.3] }
 };

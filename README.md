@@ -127,7 +127,21 @@ todos porque o teste deixa **todas** as portas abertas e a folha bloqueia o corr
 - **Motor-Engine-3D:** o orçamento de quadro (≤150 draw calls, ≤300 mil triângulos, ≤8 luzes) e as técnicas de
   instancing, culling e zero alocação no laço guiaram o motor.
 
-## Meshy.ai
-`tools/meshy_generate.mjs` gera modelos pela API do Meshy (texto → 3D, com textura PBR), baixa os `.glb` em
-`assets/models/` e escreve o `manifest.json` com posição, altura e colisor de cada um; o jogo carrega sozinho.
-Precisa de `MESHY_API_KEY` e de acesso de rede a `api.meshy.ai`.
+## Meshy.ai (integrado)
+Modelos do Meshy já no jogo (`assets/models/`, carregados por `src/engine/models.js` a partir do `manifest.json`):
+
+| Modelo | Origem | Onde | Tamanho |
+|---|---|---|---|
+| **O Palhaço (inimigo)** — "Undead Killer Clown" da conta | imagem→3D, *remesh* 2,7 mi → 31 mil triângulos, **esqueleto** com clipes de andar e correr | inimigo; a IA mistura parado/andar/correr pela velocidade | 4,8 MB + 2×30 KB |
+| Cavalo de carrossel | texto→3D | carrossel (parque) | 1,2 MB |
+| Estátua de palhaço com balões | texto→3D | parque | 1,0 MB |
+| Carrocinha de pipoca | texto→3D | praça de entrada | 1,3 MB |
+| Canhão de circo | texto→3D | depósito | 1,3 MB |
+| Manequim com fantasia de palhaço | texto→3D | camarim 1 | 1,3 MB |
+| Placa de bilheteria | texto→3D | estacionamento | 1,2 MB |
+
+- `tools/meshy_generate.mjs` — gera (em paralelo, retomável: os IDs ficam em `meshy_tasks.json`) e baixa (`--download`)
+  os modelos e o palhaço com esqueleto, e escreve o manifesto. Precisa de `MESHY_API_KEY`.
+- `tools/optimize_models.cjs` — deixa os GLB leves para celular: texturas 1024 px JPEG, deduplicação, e os arquivos de
+  animação só com os ossos (de 222 MB para ~12 MB).
+- Sem o manifesto, o jogo volta aos modelos procedurais (o palhaço feito com a malha do MakeHuman).

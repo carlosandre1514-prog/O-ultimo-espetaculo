@@ -17,6 +17,14 @@
   async function loadGLB(file) { return (await loadGLTF(file)).scene; }
   // normaliza altura, apoia no chão, materiais padronizados (sombra/neblina iguais ao resto)
   function fit(obj, height) {
+    // personagem com esqueleto: a malha é posicionada pelos ossos, então mede pelos ossos
+    let bones = []; obj.updateMatrixWorld(true); obj.traverse(o => { if (o.isBone) bones.push(o.getWorldPosition(new THREE.Vector3())); });
+    if (bones.length) {
+      let y0 = Infinity, y1 = -Infinity; bones.forEach(p => { y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
+      const full = (y1 - y0) / 0.93, s = height / (full || 1); obj.scale.multiplyScalar(s); obj.position.y -= y0 * s;
+      obj.traverse(o => { if (o.isMesh) { o.material.fog = true; if (o.material.map) o.material.map.encoding = THREE.sRGBEncoding; o.material.metalness = Math.min(o.material.metalness, 0.2); } });
+      const w = new THREE.Group(); w.add(obj); return w;
+    }
     const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3());
     const s = height / (size.y || 1); obj.scale.multiplyScalar(s);
     const b2 = new THREE.Box3().setFromObject(obj); obj.position.y -= b2.min.y;
