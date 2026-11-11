@@ -28,5 +28,11 @@
     "preview": "01a1cbad-67ad-7553-9b12-b75dd786ff8d",
     "refine": "01a1cbae-09d3-70a0-b2d6-96540d593df0",
     "done": true
+  },
+  "_inimigo_palhaco": {
+    "source": "704867ef-89a6-4c8f-ac4e-f4b419c2a922",
+    "remesh": "01a1cbaf-3097-7657-8f4e-810371090755",
+    "rigging": "01a1cbb2-3a19-708a-89e4-a76c189423ba",
+    "done": true
   }
 }

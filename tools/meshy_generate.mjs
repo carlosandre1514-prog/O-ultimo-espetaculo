@@ -50,6 +50,18 @@ async function download(name) {
   man.props.push({ file: name + '.glb', sector: a.sector, pos: a.pos, yaw: a.yaw, height: a.height, collider: a.collider });
   fs.writeFileSync(manPath, JSON.stringify(man, null, 2)); console.log('baixado', name, (buf.length / 1024).toFixed(0), 'KB'); return true;
 }
+// Inimigo: o "Undead Killer Clown" da conta (remesh 30k + rigging) com clipes de andar/correr
+async function downloadEnemy() {
+  const t = tasks._inimigo_palhaco; if (!t || !t.rigging) return;
+  const r = await call('GET', 'https://api.meshy.ai/openapi/v1/rigging/' + t.rigging), res = r.result || {}, anim = res.basic_animations || {};
+  const get = async (url, file) => { const x = await fetch(url); if (!x.ok) throw new Error('download ' + x.status); const b = Buffer.from(await x.arrayBuffer()); fs.writeFileSync(path.join(dir, file), b); console.log('baixado', file, (b.length / 1024).toFixed(0), 'KB'); };
+  await get(res.rigged_character_glb_url, 'palhaco.glb');
+  if (anim.walking_glb_url) await get(anim.walking_glb_url, 'palhaco_walk.glb');
+  if (anim.running_glb_url) await get(anim.running_glb_url, 'palhaco_run.glb');
+  man.enemy = { file: 'palhaco.glb', height: 2.05, anims: { walk: 'palhaco_walk.glb', run: 'palhaco_run.glb' } };
+  fs.writeFileSync(manPath, JSON.stringify(man, null, 2));
+}
 const valid = names.filter(n => ASSETS[n] || console.warn('desconhecido:', n));
 if (!onlyDownload) await Promise.all(valid.map(n => generate(n).catch(e => console.error('falhou', n, e.message))));
+try { await downloadEnemy(); } catch (e) { console.error('download pendente do palhaço -', e.message); }
 for (const n of valid) { try { await download(n); } catch (e) { console.error('download pendente', n, '-', e.message); } }
