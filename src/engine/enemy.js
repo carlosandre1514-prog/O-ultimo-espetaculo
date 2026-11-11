@@ -30,7 +30,11 @@
       let body = null; try { body = await loadBody(); } catch (e) { console.warn('corpo do inimigo indisponível', e); }
       // modelo externo (ex.: gerado no Meshy) tem prioridade, se existir em assets/models/manifest.json
       const ext = OE.Models && await OE.Models.enemyModel();
-      if (ext) { this.group.add(ext); this.eyeH = 1.9; return; }
+      if (ext) { this.group.add(ext.obj); this.eyeH = 1.9; this.mixer = ext.mixer; this.actions = ext.actions;
+        const pick = (...ks) => ks.map(k => Object.keys(ext.actions).find(n => n.includes(k))).find(Boolean);
+        this.clipWalk = ext.actions[pick('walk')]; this.clipRun = ext.actions[pick('run')] || this.clipWalk; this.clipIdle = ext.actions[pick('idle')];
+        [this.clipWalk, this.clipRun, this.clipIdle].forEach(a => { if (a) { a.play(); a.setEffectiveWeight(0); } });
+        return; }
       if (body) this._buildBody(body, await loadImg(OE.asset('assets/skin_m_suit.jpg')).catch(() => null)); else this._fallbackBody();
     }
     _buildBody(B, img) {
@@ -229,6 +233,14 @@
     animate(dt, speed) {
       const moving = this.moved > 0 ? 1 : 0; this.moved = 0;
       this.phase += dt * (moving ? 2.2 + speed * 1.4 : 0); const amp = moving ? Math.min(0.55, 0.18 + speed * 0.1) : 0;
+      if (this.mixer) {   // esqueleto: mistura parado / andar / correr pela velocidade
+        const run = moving && speed > 2.6, walk = moving && !run, k = Math.min(1, dt * 6);
+        const blend = (a, w) => { if (a) a.setEffectiveWeight(a.getEffectiveWeight() + (w - a.getEffectiveWeight()) * k); };
+        if (this.clipRun === this.clipWalk) blend(this.clipWalk, moving ? 1 : 0); else { blend(this.clipWalk, walk ? 1 : 0); blend(this.clipRun, run ? 1 : 0); }
+        if (this.clipIdle) blend(this.clipIdle, moving ? 0 : 1);
+        if (this.clipWalk) this.clipWalk.timeScale = moving ? Math.max(0.6, speed / 1.4) : 1;
+        this.mixer.update(dt);
+      }
       if (this.shader) { this.shader.uniforms.uPhase.value = this.phase; this.shader.uniforms.uAmp.value += (amp - this.shader.uniforms.uAmp.value) * Math.min(1, dt * 6); }
       this.group.position.set(this.pos.x, this.pos.y + Math.abs(Math.sin(this.phase)) * 0.03 * moving, this.pos.z);
       this.group.rotation.set(this.state === 'chase' ? 0.12 : 0.04, this.yaw, Math.sin(this.phase * 0.5) * 0.03);

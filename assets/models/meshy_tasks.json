@@ -1,24 +1,32 @@
 {
   "cavalo_carrossel": {
     "preview": "01a1cbad-67cb-751d-b777-fd6b42f7d353",
-    "refine": "01a1cbae-33f9-7773-9f59-0a14f45b899b"
+    "refine": "01a1cbae-33f9-7773-9f59-0a14f45b899b",
+    "done": true
   },
   "carrocinha_pipoca": {
-    "preview": "01a1cbad-67ae-72a9-87bf-64dcbe6a50b8"
+    "preview": "01a1cbad-67ae-72a9-87bf-64dcbe6a50b8",
+    "refine": "01a1cbae-65b7-7301-9b8f-1e56820b6494",
+    "done": true
   },
   "estatua_palhaco": {
     "preview": "01a1cbad-67ad-751a-b0ee-b98f774da09e",
-    "refine": "01a1cbae-1c27-7425-b770-273fa8a976c7"
+    "refine": "01a1cbae-1c27-7425-b770-273fa8a976c7",
+    "done": true
   },
   "canhao_circo": {
     "preview": "01a1cbad-67b2-7000-ab71-5d77e884b1c2",
-    "refine": "01a1cbae-321a-75af-bdf8-db35252cd850"
+    "refine": "01a1cbae-321a-75af-bdf8-db35252cd850",
+    "done": true
   },
   "manequim_palhaco": {
-    "preview": "01a1cbad-67d7-77cd-a3c7-030ed3f9f3ac"
+    "preview": "01a1cbad-67d7-77cd-a3c7-030ed3f9f3ac",
+    "refine": "01a1cbae-5249-70f8-8eb6-b9d534b7b08e",
+    "done": true
   },
   "bilheteria_placa": {
     "preview": "01a1cbad-67ad-7553-9b12-b75dd786ff8d",
-    "refine": "01a1cbae-09d3-70a0-b2d6-96540d593df0"
+    "refine": "01a1cbae-09d3-70a0-b2d6-96540d593df0",
+    "done": true
   }
 }

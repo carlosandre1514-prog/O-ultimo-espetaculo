@@ -11,9 +11,10 @@
   const M = { manifest: null };
   OE.Models = M;
   function loader() { return new THREE.GLTFLoader(); }
-  async function loadGLB(file) {
-    return new Promise((res, rej) => loader().load(OE.asset('assets/models/' + file), g => res(g.scene), undefined, rej));
+  async function loadGLTF(file) {
+    return new Promise((res, rej) => loader().load(OE.asset('assets/models/' + file), g => res(g), undefined, rej));
   }
+  async function loadGLB(file) { return (await loadGLTF(file)).scene; }
   // normaliza altura, apoia no chão, materiais padronizados (sombra/neblina iguais ao resto)
   function fit(obj, height) {
     const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3());
@@ -27,9 +28,20 @@
     try { const r = await fetch(OE.asset('assets/models/manifest.json')); M.manifest = r.ok ? await r.json() : false; } catch (e) { M.manifest = false; }
     return M.manifest;
   };
+  // Inimigo: GLB com esqueleto (rigging do Meshy) + clipes de animação em arquivos separados
+  // ("anims": {"walk": "x_walk.glb", "run": "x_run.glb"}) — os ossos têm os mesmos nomes.
   M.enemyModel = async function () {
     const m = await M.loadManifest(); if (!m || !m.enemy) return null;
-    try { return fit(await loadGLB(m.enemy.file), m.enemy.height || 2.05); } catch (e) { console.warn('GLB do inimigo falhou', e); return null; }
+    try {
+      const g = await loadGLTF(m.enemy.file), obj = fit(g.scene, m.enemy.height || 2.05);
+      obj.traverse(o => { if (o.isSkinnedMesh) o.frustumCulled = false; });
+      const mixer = new THREE.AnimationMixer(g.scene), actions = {};
+      g.animations.forEach(c => { actions[c.name.toLowerCase()] = mixer.clipAction(c); });
+      for (const [k, f] of Object.entries(m.enemy.anims || {})) {
+        try { const a = await loadGLTF(f); if (a.animations[0]) actions[k] = mixer.clipAction(a.animations[0]); } catch (e) { console.warn('animação', k, e); }
+      }
+      return { obj, mixer, actions };
+    } catch (e) { console.warn('GLB do inimigo falhou', e); return null; }
   };
   // chamado depois que os setores foram construídos
   M.placeProps = async function () {
