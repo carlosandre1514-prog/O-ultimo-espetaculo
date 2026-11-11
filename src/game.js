@@ -40,6 +40,7 @@
       OE.Map.define();
       await OE.Sectors.buildAll(this.scene, this.world, async (k, name) => { progress(0.1 + k * 0.7, 'Construindo: ' + name); await frame(); });
       OE.Lights.finalize();
+      await OE.Models.placeProps();
       progress(0.82, 'Calculando rotas do inimigo'); await frame();
       OE.Nav.build();
       progress(0.9, 'Ele está acordando'); await frame();

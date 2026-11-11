@@ -28,6 +28,9 @@
     }
     async load() {
       let body = null; try { body = await loadBody(); } catch (e) { console.warn('corpo do inimigo indisponível', e); }
+      // modelo externo (ex.: gerado no Meshy) tem prioridade, se existir em assets/models/manifest.json
+      const ext = OE.Models && await OE.Models.enemyModel();
+      if (ext) { this.group.add(ext); this.eyeH = 1.9; return; }
       if (body) this._buildBody(body, await loadImg(OE.asset('assets/skin_m_suit.jpg')).catch(() => null)); else this._fallbackBody();
     }
     _buildBody(B, img) {
@@ -52,6 +55,9 @@
       // UV v invertido? testa as duas convenções medindo onde a cabeça cai
       for (let t = 0; t < B.nT; t++) {
         const a = I[t * 3], b = I[t * 3 + 1], c = I[t * 3 + 2]; if (!(isHead[a] && isHead[b] && isHead[c])) continue;
+        // triângulos que cruzam uma costura da UV (uv média por vértice) espalhariam tinta: pula
+        const du = Math.max(Math.abs(U[a * 2] - U[b * 2]), Math.abs(U[b * 2] - U[c * 2]), Math.abs(U[a * 2] - U[c * 2])), dv = Math.max(Math.abs(U[a * 2 + 1] - U[b * 2 + 1]), Math.abs(U[b * 2 + 1] - U[c * 2 + 1]), Math.abs(U[a * 2 + 1] - U[c * 2 + 1]));
+        if (du > 0.04 || dv > 0.04) continue;
         const cx = (P[a * 3] + P[b * 3] + P[c * 3]) / 3, cy = (P[a * 3 + 1] + P[b * 3 + 1] + P[c * 3 + 1]) / 3 - minY, cz = (P[a * 3 + 2] + P[b * 3 + 2] + P[c * 3 + 2]) / 3;
         const front = cz > maxZ - H * 0.05;
         const eye = front && Math.abs(Math.abs(cx - head.x) - eyeX) < H * 0.013 && Math.abs(cy - eyeY) < H * 0.017;
@@ -117,7 +123,7 @@
       if (P.hidden || P.spectator) return false;
       const eye = tmp.set(this.pos.x, this.pos.y + (this.eyeH || 1.9), this.pos.z), d = eye.distanceTo(P.cam.position);
       const lit = OE.game.flashOn ? 1 : (OE.Lights.zone && OE.Lights.zone.name === 'exterior' ? 0.75 : 0.55);
-      const range = (P.crouch ? 0.7 : 1) * (this.state === 'chase' ? 30 : 20) * lit;
+      const range = (P.crouch ? 0.7 : 1) * (this.state === 'chase' ? 32 : 26) * lit;
       if (d > range) return false;
       const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), dx = P.pos.x - this.pos.x, dz = P.pos.z - this.pos.z, dl = Math.hypot(dx, dz) || 1;
       const cos = (fx * dx + fz * dz) / dl; if (d > 2.2 && cos < (this.state === 'chase' ? -0.2 : 0.42)) return false;

@@ -275,7 +275,7 @@
         p.setXYZ(i, px, Math.max(-h / 2, py), pz); }
       gg.computeVertexNormals(); return gg;
     });
-    b.geo(o.mat || M().tarp, g, x, h / 2 + OY(o), z, { yaw, tint: o.tint, uvScale: 2 });
+    b.geo(o.mat || M().tarp, g, x, h / 2 + OY(o), z, { yaw, tint: o.tint || 0x5a6066, uvScale: 2 });
     b.colBox(x, OY(o), z, w, h, d, yaw, 'prop');
   };
   // ---------------- Veículos ----------------

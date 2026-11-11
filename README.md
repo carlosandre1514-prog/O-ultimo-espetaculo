@@ -1,0 +1,133 @@
+# O Último Espetáculo
+
+Jogo de terror em primeira pessoa num complexo circense abandonado — o **Gran Circo Estrela**, fechado em 1987
+depois do "último espetáculo". Roda no navegador (PC e Android), instala como app (PWA), funciona offline e
+também sai em **um único arquivo HTML** que abre direto no celular.
+
+Tecnologia: **Three.js r128** (o mesmo do MiniBlender), sem nenhum download de textura: tudo é gerado na carga.
+
+## Rodar
+
+```bash
+python3 -m http.server 8000      # na pasta do projeto
+# abra http://localhost:8000
+python3 tools/build_single.py    # gera dist/UltimoEspetaculo.html (arquivo único, abre sem servidor)
+```
+
+Controles — **PC:** WASD andar · mouse olhar · Shift correr · C agachar · E interagir/esconder/sair · F lanterna ·
+F3 desempenho · V espectador · M planta vista de cima. **Celular:** lado esquerdo anda, lado direito olha, botões
+🔦 🏃 ⤓ ✋.
+
+## O mapa
+
+```
+     D Alojamentos        C Bastidores/Camarins     E Depósito          galpão + escada
+     (bunks, cozinha,     (camarins, maquiagem,     (porta-paletes,     de serviço
+      refeitório)          vestiário, escritórios)   mezanino)
+                                │ passagem coberta
+     G Parque              B GRANDE TENDA  ─────────  F Área dos animais
+     roda-gigante,         arquibancadas, picadeiro,   estábulo, baias, jaulas,
+     carrossel, barracas,  passarelas a 9,5 m           carroças-jaula
+     bate-bate, Trem
+     Fantasma                praça de entrada
+                       A ENTRADA: portão acorrentado, bilheterias, guarita
+                          estrada e estacionamento (fora da cerca)
+     H SUBSOLO (y = -4,5): sob os bastidores, túnel até o galpão dos animais, sala secreta
+```
+
+| Setor | Arquivo | Destaques |
+|---|---|---|
+| A Entrada | `src/map/CircusEntrance.js` | Portão de ferro sob arco com letreiro, 2 bilheterias integradas à cerca, guarita, carros, outdoor, catracas. **3 entradas alternativas**: porta dos fundos da bilheteria oeste e dois buracos na cerca |
+| B Tenda | `src/map/MainCircusTent.js` | Lona rasgada sobre 4 mastros de 24 m + 12 intermediários + 36 de parede, cabos e estacas, picadeiro, 4 blocos de arquibancada de 8 fileiras (dá para subir e andar **embaixo** delas), portal com cortinas e coreto, passarelas técnicas (anel + pontes + plataforma central) com **duas escadas**, trecho da passarela desabado, refletores que acendem sozinhos (SpotLight real + cone de luz) |
+| C Bastidores | `src/map/Backstage.js` | Corredor + 12 ambientes: sala de preparação, 2 escritórios, saguão, figurinos, escada do subsolo, 2 camarins (espelhos com lâmpadas, quase todas queimadas), maquiagem, vestiário com armários, banheiros com cabines |
+| D Alojamentos | `src/map/Dormitories.js` | 4 alojamentos com beliches, 2 quartos de artistas, banheiro coletivo, cozinha, refeitório |
+| E Depósito | `src/map/Warehouse.js` | Galpão 40×38×9 m, porta de enrolar emperrada a 1 m (passa agachado), porta-paletes, labirinto de caixotes, contêiner, objetos sob lona, mezanino com escritório |
+| F Animais | `src/map/AnimalArea.js` | Pátio cercado, estábulo com baias e portões de ferro, ração, lavagem, equipamentos, selaria, jaula dos leões, carroças-jaula, galpão com a escada de serviço |
+| G Parque | `src/map/AbandonedPark.js` | Roda-gigante de 27 m (2 gôndolas caídas), carrossel com cavalos, 6 barracas, bate-bate, Trem Fantasma com corredores internos, árvores, mato alto |
+| H Subsolo | `src/map/Underground.js` | Túneis, casa do gerador, sala elétrica, duto técnico (só agachado — o inimigo não passa), exaustores, casa de bombas, depósitos e uma **sala secreta** atrás de uma estante empurrável |
+
+Arquitetura real: paredes com espessura geradas por `Arch.plan` (cada face com o acabamento do seu cômodo),
+portas com batente, janelas com peitoril, caixilho e vidro (às vezes quebrado), telhados de duas águas com empenas,
+escadas com corrimão, guarda-corpos, treliças, cercas de tela com arame farpado. Deterioração em textura
+(ferrugem, tinta descascando, umidade subindo das paredes, rachaduras, lona com buracos) e em geometria
+(tábuas soltas, cacos, entulho, lonas sobre objetos, mato).
+
+## Sistemas
+
+| Sistema | Arquivo |
+|---|---|
+| Jogador em 1ª pessoa (colisão, degraus, agachar, fôlego, passos com ruído, lanterna, espectador) | `src/engine/player.js` |
+| Colisões (caixas orientadas + cilindros, hash espacial, raios de visão) | `src/engine/collision.js` |
+| **Esconderijos** (`HidingSpots`) | `src/engine/hiding.js` |
+| **Objetos interativos** (`InteractiveObjects`) | `src/engine/interact.js` |
+| **Iluminação/atmosfera** (`EnvironmentLighting`) | `src/engine/lighting.js` |
+| Setores, carga/descarga, oclusão e LOD | `src/engine/sectors.js`, `src/engine/builder.js` |
+| Inimigo (O Palhaço) e navegação | `src/engine/enemy.js`, `src/engine/nav.js` |
+| Áudio sintetizado (vento, caixinha de música, rangidos, coração) | `src/engine/audio.js` |
+| Modelos GLB externos / Meshy.ai | `src/engine/models.js`, `tools/meshy_generate.mjs` |
+
+### Esconderijos (101 no mapa)
+- **Fechados (35):** guarda-roupas, armários de madeira e da cozinha, armários metálicos, baús, cabines de banheiro.
+- **Abertos (41):** debaixo de camas, beliches, mesas e bancos; atrás de cortinas, do palco, de equipamentos, balcões.
+- **Improvisados (25):** lixeiras grandes e caçambas (com tampa), caixote gigante, contêiner, feno, cocho de ração,
+  gôndola caída, embaixo das arquibancadas, entre tubulações.
+
+Cada um tem ponto de entrada, animação (porta/tampa abre, câmera entra, fecha), câmera com limites de olhar
+(rente ao chão embaixo da cama, frestas do armário metálico desenhadas na tela), ocupação, ponto de saída
+**validado contra colisões** (se a frente estiver bloqueada, tenta laterais) e regras com o inimigo:
+se ele **viu você entrar**, vai até lá e te puxa; se não viu, um esconderijo aberto ainda pode te denunciar
+quando ele passa perto; lanterna acesa lá dentro aumenta muito a exposição.
+
+### Objetos interativos (todos funcionais)
+76 portas (madeira, metal, grade, portão de baia; trancadas por chave, emperradas, **ferrolho de um lado só = atalho**),
+porta de enrolar e portão de correr, gavetas que guardam itens, interruptores e alavancas (grupos de luz),
+gerador (precisa do fusível; liga a energia e faz um barulho enorme), estante empurrável, caixinhas de música
+(distração), garrafas/latas no chão (ruído se você não estiver agachado), bilhetes.
+
+Progressão de exemplo: chave do cadeado (guarita) → abre o portão por dentro · chave do camarim 2 (criado-mudo do
+alojamento) → chave do subsolo (penteadeira do camarim 2) → subsolo · chave do escritório (bancada do depósito) →
+fusível → gerador → energia (porta de enrolar, luzes, roda-gigante).
+
+### Desempenho
+- Geometria estática **mesclada** por material/célula de 40 m; materiais e geometrias compartilhados.
+- **InstancedMesh** para grama, árvores e todas as lâmpadas; todos os halos de luz em **um** `THREE.Points`.
+- **Frustum culling** por pedaço + plano distante casado com a neblina.
+- **Oclusão por ambiente (PVS):** dentro da tenda/prédios só desenha o que dá para ver pelas aberturas; subsolo
+  e superfície se excluem (exceto junto das escadas).
+- **Carregamento por setores:** miudezas criadas ao chegar perto (~48 m) e **descarregadas** ao se afastar (~72 m),
+  com seus colisores; interiores só aparecem perto dos prédios; portas/gavetas cortadas por distância.
+- **LOD:** miudezas somem a 22 m, estrutura a 100 m.
+- Iluminação: pool fixo de 6 PointLights redistribuídas para as lâmpadas mais relevantes (o número de luzes nunca
+  muda → sem recompilar shaders), sem sombras dinâmicas.
+- Resolução fixa (até 2× DPR), antialias ligado — **nada de resolução adaptativa nem desfoque**.
+
+Medição em Chromium headless (SwiftShader, sem GPU): 76–240 draw calls e 60–183 mil triângulos conforme o ponto
+do mapa. A meta de ≤150 draw calls do Motor-Engine-3D é atingida no subsolo, estábulo e depósito; praça, parque e
+alojamentos ficam entre 200 e 240.
+
+## Testes
+
+```bash
+node tests/smoke.mjs        # carrega, sem erros
+node tests/gameplay.mjs     # portas, esconderijos, caminhada por todo o grafo, pontos de prisão
+node tests/enemy.mjs        # perseguição/captura, esconderijo visto, navegação
+node tests/perf.mjs         # draw calls e triângulos em 10 pontos
+W=960 H=540 node tests/shots.mjs <pasta> '[{"n":"x","walk":[0,0,20],"yaw":0,"flash":true}]'
+```
+
+Última execução: 76/76 portas abrem e fecham; 101/101 esconderijos com entrada, câmera, saída livre; 0 pontos
+onde o jogador fica preso (400 amostras); o robô percorreu 13 046 trechos com a física real e travou em 86, quase
+todos porque o teste deixa **todas** as portas abertas e a folha bloqueia o corredor; o inimigo alcança
+1242 de 1255 pontos e chegou a 24 de 25 destinos aleatórios; captura e respawn no checkpoint funcionam.
+
+## Reaproveitado dos outros repositórios
+- **MiniBlender:** Three.js r128 e GLTFLoader, a malha humana do MakeHuman (vira o corpo do Palhaço via
+  `tools/build_enemy.py`), a textura de terno, o esquema de PWA (manifest + service worker) e o gerador de arquivo
+  único (`tools/build_single.py`).
+- **Motor-Engine-3D:** o orçamento de quadro (≤150 draw calls, ≤300 mil triângulos, ≤8 luzes) e as técnicas de
+  instancing, culling e zero alocação no laço guiaram o motor.
+
+## Meshy.ai
+`tools/meshy_generate.mjs` gera modelos pela API do Meshy (texto → 3D, com textura PBR), baixa os `.glb` em
+`assets/models/` e escreve o `manifest.json` com posição, altura e colisor de cada um; o jogo carrega sozinho.
+Precisa de `MESHY_API_KEY` e de acesso de rede a `api.meshy.ai`.
