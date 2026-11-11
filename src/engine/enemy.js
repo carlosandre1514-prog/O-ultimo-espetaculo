@@ -35,6 +35,12 @@
       // modelo externo (ex.: gerado no Meshy) tem prioridade, se existir em assets/models/manifest.json
       const ext = OE.Models && await OE.Models.enemyModel();
       if (ext) { this.group.add(ext.obj); this.eyeH = 1.9; this.mixer = ext.mixer; this.actions = ext.actions;
+        // cartola do Mestre de Cerimônias presa ao osso da cabeça
+        let head = null; ext.obj.traverse(o => { if (o.isBone && /head/i.test(o.name) && !/end|top|tip/i.test(o.name) && !head) head = o; });
+        if (head) { ext.obj.updateMatrixWorld(true); const ws = head.getWorldScale(new THREE.Vector3()).x || 1, hat = new THREE.Group();
+          const felt = new THREE.MeshStandardMaterial({ color: 0x060405, roughness: 1, metalness: 0 }), band = new THREE.MeshStandardMaterial({ color: 0x6a0c0c, roughness: 0.6 });
+          const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.015, 24), felt), crown = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.125, 0.24, 20), felt), rb = new THREE.Mesh(new THREE.CylinderGeometry(0.127, 0.127, 0.04, 20), band);
+          crown.position.y = 0.125; rb.position.y = 0.03; hat.add(brim, crown, rb); hat.scale.setScalar(1 / ws); hat.position.y = 0.16 / ws; hat.rotation.z = 0.12; head.add(hat); }
         const pick = (...ks) => ks.map(k => Object.keys(ext.actions).find(n => n.includes(k))).find(Boolean);
         const A = ext.actions;
         this.clipWalk = A.stalk || A[pick('walk')]; this.clipRun = A.chase || A[pick('run')] || this.clipWalk; this.clipIdle = A.idle || A.search || A[pick('idle')];
@@ -151,7 +157,7 @@
       if (this.percT <= 0) {
         this.percT = 0.1; const see = this.canSee(P); this.seesPlayer = see;
         if (see) { this.visibleT = OE.state.time; const d = this.pos.distanceTo(P.pos); this.aware += 0.1 * (d < 6 ? 6 : 14 / d) * (P.moving ? 1.3 : 0.8);
-          if (this.aware > 1 && this.state !== 'chase') { this.state = 'chase'; this.screamT = 0.8; this.playOnce && this.playOnce('scream'); OE.Audio.play('sting', null, 0.8); OE.emit('chase', true); }
+          if (this.aware > 1 && this.state !== 'chase') { this.state = 'chase'; this.screamT = 0.8; this.playOnce && this.playOnce('scream'); OE.Audio.play('laugh', { x: this.pos.x, y: this.pos.y + 1.8, z: this.pos.z }, 1); OE.Audio.play('sting', null, 0.6); OE.emit('chase', true); }
           if (this.lastSeen) this.lastVel = P.pos.clone().sub(this.lastSeen).multiplyScalar(10); this.lastSeen = P.pos.clone(); this.lostT = 0; }
         else this.aware = Math.max(0, this.aware - 0.03);
       }

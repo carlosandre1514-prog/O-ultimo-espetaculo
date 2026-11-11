@@ -33,7 +33,7 @@
             { x: -19, z: -54, w: 1.2, h: 2.1, noNav: true }, { x: -19, z: -56, w: 1.4, h: 2.1, noNav: true }],
           doors: [{ x: 55, z: -37, w: 1.2, door: { name: 'porta corta-fogo' } }, { x: 45, z: -38.5 }, { x: 65, z: -35.5 }, { x: 80, z: -38.5 },
             { x: 92, z: -17, w: 1.2, door: { lock: 'bolt', boltSide: -1, name: 'porta da escada de serviço' } },
-            { x: 7, z: -41, w: 1.2, door: { name: 'casa do gerador' } }, { x: -6, z: -41, door: { name: 'sala elétrica' } }, { x: -18, z: -41, door: { name: 'depósito' } }]
+            { x: 7, z: -41, w: 1.2, door: { name: 'casa do gerador' } }, { x: -6, z: -41, door: { name: 'sala elétrica' } }, { x: -18, z: -41, door: { name: 'porta dos arquivos', lock: 'code:1403', kind: 'metal' } }]
         });
         P.sign(b, 7, -2.2, -40.82, 0, 6, 1.6); P.sign(b, 55.17, -2.0, -37, Math.PI / 2, 6, 1.4);
         // ---- tubulações e cabos ao longo dos túneis ----
@@ -61,7 +61,8 @@
         new OE.Switch({ x: -11.6, y: Y + 1.5, z: -46.4, yaw: Math.PI / 2, kind: 'lever', lights: 'parque', needsPower: true, name: 'disjuntor do parque', on: true });
         H.wardrobe(b, -0.6, -48.5, -Math.PI / 2, { y: Y, kind: 'locker', mat: M.metalGray });
         P.cables(b, [[-11.5, Y + 3.8, -42], [-6, Y + 3.9, -45], [-0.5, Y + 3.8, -45]]); P.desk(b, -5.5, -49.2, 0, {});
-        new OE.Note({ x: -5.7, y: Y + 0.8, z: -49.0, title: 'Esquema elétrico', text: 'Gerador → quadro geral → tenda / parque / subsolo.\nSem fusível o gerador não parte.\nO duto técnico liga esta sala ao depósito (passa só agachado).' });
+        new OE.Note({ x: -5.7, y: Y + 0.8, z: -49.0, title: 'Sala de controle — esquema', text: 'Gerador → quadro geral → tenda / parque / subsolo.\nSem fusível o gerador não parte.\nO duto técnico liga esta sala aos arquivos (passa só agachado).' });
+        OE.Story.place('fita1', -5.0, Y + 0.78, -49.3, 0.2);
         P.fluorescent(b, -6, Y + HG, -45.5, 0, { needsPower: true, group: 'sub', mode: 'flicker' });
         // ---- duto técnico (agachado) ----
         P.pipes(b, [[-12, Y + 1.05, -52.2], [0, Y + 1.05, -52.2]], 0.06); P.cables(b, [[-12, Y + 0.95, -53.3], [0, Y + 0.95, -53.3]]);
@@ -69,6 +70,9 @@
         // ---- depósito e a estante que esconde a passagem ----
         P.shelf(b, -23.5, -45, Math.PI / 2, { w: 3, d: 0.5 }); P.shelf(b, -23.5, -49, Math.PI / 2, { w: 3, d: 0.5 }); P.crateStack(b, -14, -43, 0.1, 2); P.crate(b, -15.3, -42.6, 0.3, { s: 0.8 });
         P.cardboardPile(b, -21, -42, 3); P.tarpCovered(b, -15, -50.5, 0.4, 2.0, 1.3, 1.5, { seed: 7, y: Y });
+        // arquivos antigos do circo
+        [[-21, -43.5], [-21, -44.2], [-21, -44.9], [-16.5, -47.3], [-15.8, -47.3]].forEach(([x, z], i) => P.fileCabinet(b, x, z, i < 3 ? Math.PI / 2 : 0));
+        P.table(b, -18, -48.5, 0, { y: Y, w: 1.6, d: 0.8 }); P.papers(b, -18, -48.5, 10, Y + 0.77); OE.Story.place('jornal', -18.2, Y + 0.77, -48.4, 0.5);
         H.wardrobe(b, -12.6, -46, -Math.PI / 2, { y: Y, w: 1.1 }); H.behind('crates', -14, -44.6, 0, Y, { crouch: true, side: 0.8, cat: 'improvisado' });
         new OE.Pushable({ x: -19, y: Y, z: -53.6, w: 2.0, h: 2.1, d: 0.45, yaw: 0, dir: [1, 0], dist: 1.9, steps: 1, name: 'estante (está meio solta)',
           build: bb => { const m = M.metalGray; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([i, j]) => bb.box(m, i * 0.97, 0, j * 0.2, 0.04, 2.1, 0.04)); for (let k = 0; k < 4; k++) { bb.box(m, 0, 0.12 + k * 0.62, 0, 2.0, 0.025, 0.45); bb.box(M.cardboard, -0.5 + (k % 2) * 0.6, 0.15 + k * 0.62, 0, 0.5, 0.3, 0.35); } },
@@ -77,11 +81,14 @@
         for (let i = 0; i < 18; i++) P.poster(b, -23.85, Y + 0.8 + (i % 3) * 0.7, -64.5 + Math.floor(i / 3) * 1.5, Math.PI / 2, (i * 5) % 8, 0.55);
         for (let i = 0; i < 10; i++) P.poster(b, -22.5 + i * 0.9, Y + 1.0 + (i % 2) * 0.8, -65.85, 0, (i * 3 + 6) % 8, 0.5);
         for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; P.chair(b, -19 + Math.cos(a) * 2.6, -61 + Math.sin(a) * 2.6, -a - Math.PI / 2, { y: Y }); }
-        P.mannequin(b, -19, -61, 0, { ruff: true, tint: 0xc8bcaa }); P.L(b, -19, -61, 0, Y);
+        OE.Director.addMannequin(-19, Y, -61, 0, 0xc8bcaa, true); P.L(b, -19, -61, 0, Y);
         for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, x = -19 + Math.cos(a) * 1.2, z = -61 + Math.sin(a) * 1.2; b.cyl(M.bone, x, Y, z, 0.03, 0.035, 0.12 + r() * 0.15, 6, { lod: 'detail' }); OE.Lights.add({ x, y: Y + 0.3, z, size: 0.02, color: 0xffa040, intensity: i === 0 ? 0.9 : 0.3, range: 5, mode: 'flicker', noLight: i !== 0, halo: 0.25 }); }
         { const l = P.L(b, -15, -63, -2.3, Y); l.box(M.metalGray, 0, 0.9, 0, 0.5, 0.35, 0.3); l.cyl(M.iron, 0.15, 1.25, 0, 0.15, 0.15, 0.06, 12, { rx: Math.PI / 2 }); l.cyl(M.iron, -0.15, 1.25, 0, 0.15, 0.15, 0.06, 12, { rx: Math.PI / 2 }); P.table(b, -15, -63, -2.3, { y: Y, w: 0.8, d: 0.6, h: 0.9 }); }
-        new OE.MusicBox({ x: -19.6, y: Y + 0.5, z: -60.2 });
-        new OE.Note({ x: -16.2, y: Y + 0.9, z: -64.8, title: 'Caderno do Beppo', text: 'O público nunca vai embora.\nEles só precisam ficar quietos até o fim do número.\nO último espetáculo ainda não terminou.\nQuando a caixinha tocar, todos voltam para seus lugares.' });
+        // sala secreta do proprietário: a caixinha ORIGINAL
+        { const box = OE.partMesh(bb => { bb.box(OE.MAT.woodRed, 0, 0, 0, 0.22, 0.14, 0.16); bb.box(OE.MAT.metalYellow, 0, 0.14, 0, 0.23, 0.02, 0.17); bb.cyl(OE.MAT.chrome, 0.12, 0.06, 0, 0.012, 0.012, 0.06, 6, { rz: Math.PI / 2 }); });
+          box.position.set(-19.6, Y + 0.5, -60.2); OE.addDyn(box); const em = OE.Lights.add({ x: -19.6, y: Y + 0.75, z: -60.2, size: 0.01, color: 0xffb060, intensity: 0.6, range: 3, mode: 'pulse', halo: 0.4 });
+          const it = OE.Interact.add({ pos: new THREE.Vector3(-19.6, Y + 0.6, -60.2), radius: 1.8, label: () => 'Pegar a caixinha de música original', use: () => { box.visible = false; it.enabled = false; em.on = false; OE.Story.pickBox(); } }); }
+        OE.Story.place('lista', -16.2, Y + 0.9, -64.8, 0);
         H.wardrobe(b, -14.6, -57, -Math.PI / 2, { y: Y, w: 1.1, mat: M.woodRed });
         // ---- sala de ventilação (exaustores girando) ----
         [[42.5, -45.2], [47.5, -45.2]].forEach(([x, z]) => {

@@ -27,7 +27,9 @@
           OE.Lights.add({ x, y: 9.0 - 0.6, z: 100.12, size: 0.05, color: 0xffd080, intensity: 0, mode: 'off', noLight: true }); }
         // folhas do portão: esquerda presa com cadeado (chave na guarita), direita emperrada
         const leaf = (x, hinge, lock) => new OE.Door({ x, z: 100, y: 0, w: 4.4, h: 3.0, yaw: 0, hinge, kind: 'bars', lock, name: 'portão', maxAngle: 95 });
-        leaf(-2.25, -1, 'key:chave_portao'); leaf(2.25, 1, 'jammed');
+        // a história: o portão está ABERTO na chegada (fecha sozinho quando você entra — Story.trap)
+        leaf(-2.25, -1, null).startOpen = 0; leaf(2.25, 1, null);
+        OE.doors.filter(d => d.name === 'portão').forEach(d => { d.angle = d.target = d.maxAng * 0.92; d.open = true; d._apply(); });
         b.box(M.rust, 0, 0, 100, 0.25, 0.1, 0.25, { lod: 'detail' });
         for (let i = 0; i < 9; i++) b.geo(M.iron, OE.G.torus(0.05, 0.012, 4, 8), -0.1 + Math.sin(i) * 0.05, 1.0 + i * 0.07, 100.1, { yaw: i % 2 ? 1.57 : 0, lod: 'clutter' });
         b.box(M.metalYellow, 0.05, 0.85, 100.15, 0.12, 0.14, 0.05, { lod: 'clutter', col: false });
@@ -56,10 +58,11 @@
           doors: [{ x: 12, z: 92.5, w: 0.9, door: { name: 'porta da guarita', kind: 'metal', mat: M.metalGreen } }],
           windows: [{ x: 14.25, z: 95, w: 2.4, h: 1.0, sill: 1.0, broken: 0.6 }, { x: 12, z: 94.1, w: 1.0, h: 0.9, sill: 1.0, broken: 0.5 }, { x: 16.5, z: 92.5, w: 1.6, h: 0.9, sill: 1.1, broken: 0.3 }] });
         A.roofFlat(b, 12, 90, 16.5, 95, 2.6);
-        P.desk(b, 14.6, 94.1, Math.PI, { item: 'chave_portao' });
+        P.desk(b, 14.6, 94.1, Math.PI, { drawer: true });
         OE.Hiding.wardrobe(b, 16.05, 91.0, -Math.PI / 2, { kind: 'locker' });
         P.panel(b, 13, 1.1, 90.2, 0); P.ceilingLamp(b, 14.25, 2.6, 92.5, { mode: 'dying', intensity: 0.9 });
-        new OE.Note({ x: 14.2, y: 0.8, z: 93.9, title: 'Livro de ocorrências (última página)', text: '14/03/1987 — 23h40\nO público saiu. A família Moretti não.\nO palhaço disse que ia "terminar o número" sozinho.\nOuvi a música da caixinha a noite toda vindo da tenda.\n\n15/03 — Ninguém responde nos alojamentos. Vou trancar o portão e levar a chave.\n(a chave ficou na gaveta. eu não volto lá dentro.)' });
+        new OE.Note({ x: 14.2, y: 0.8, z: 93.9, title: 'Livro de ocorrências (última página)', text: '14/03/1987 — 21h40\nAs luzes da lona apagaram. A música continuou. Depois, os gritos.\nQuando a luz voltou, a plateia estava vazia. Ninguém saiu pelo portão. Eu estava aqui.\n\n15/03 — O Mestre de Cerimônias passou pela guarita às 3h. Fez uma reverência para mim.\nEle disse que o espetáculo ainda não terminou.\nEu não volto lá dentro.' });
+        OE.Story.place('ingresso', -9.6, 0.96, 100.85, 0.4);
         // ---- fora da cerca: estacionamento, outdoor, carros ----
         P.car(b, -33, 108, 0.3, { mat: M.metalBlue, vines: true }); P.car(b, -24, 112, -0.15, { mat: M.metalRed }); P.car(b, -14, 107.5, 1.65, { mat: M.metalGreen, vines: true });
         P.car(b, 27, 113, Math.PI + 0.4, { mat: M.metalYellow }); P.truck(b, -32, 116.5, 0.05, {});

@@ -32,7 +32,7 @@
 
   // Mini-builder para peças móveis (portas, gavetas): mesma qualidade de UV/cor do cenário.
   function partMesh(fn) {
-    const b = new OE.Builder('part', null); b.box = ((orig) => function (m, x, y, z, w, h, d, o) { return orig.call(this, m, x, y, z, w, h, d, Object.assign({ col: false }, o || {})); })(b.box);
+    const b = new OE.Builder('part', { box: () => ({}), cyl: () => ({}) });   // colisores das peças móveis são feitos à parte b.box = ((orig) => function (m, x, y, z, w, h, d, o) { return orig.call(this, m, x, y, z, w, h, d, Object.assign({ col: false }, o || {})); })(b.box);
     fn(b); const g = new THREE.Group(); b.finalize(g); g.children.forEach(m => { m.matrixAutoUpdate = false; }); return g;
   }
   OE.partMesh = partMesh;
@@ -84,11 +84,15 @@
       if (this.lock === 'bolt') return this.side(P.pos) === this.boltSide ? 'Abrir o ferrolho' : 'Trancada pelo outro lado';
       if (this.lock && this.lock.startsWith('key:')) { const k = this.lock.slice(4); return OE.state.items.has(k) ? 'Destrancar (' + OE.ITEMS[k] + ')' : 'Trancada · precisa: ' + OE.ITEMS[k]; }
       if (this.lock === 'power') return 'Sem energia';
+      if (this.lock === 'sealed') return 'Trancado. Não abre por dentro';
+      if (this.lock && this.lock.startsWith('code:')) return 'Painel com senha · ' + this.name;
       return (this.open ? 'Fechar ' : 'Abrir ') + this.name;
     }
     use(P) {
       if (this.lock === 'jammed') { OE.Audio.play('locked', this.pos, 0.8); OE.UI.msg('A porta está emperrada. Não abre.'); return; }
       if (this.lock === 'power') { OE.Audio.play('locked', this.pos, 0.6); OE.UI.msg('Não tem energia.'); return; }
+      if (this.lock === 'sealed') { OE.Audio.play('locked', this.pos, 1); OE.UI.msg('Não abre. É como se alguém segurasse do outro lado.'); return; }
+      if (this.lock && this.lock.startsWith('code:')) { OE.Story.keypad(this, this.lock.slice(5)); return; }
       if (this.lock === 'bolt') {
         if (this.side(P.pos) === this.boltSide) { this.lock = null; OE.Audio.play('click', this.pos); OE.UI.msg('Ferrolho aberto. Atalho liberado.'); }
         else { OE.Audio.play('locked', this.pos, 0.8); OE.UI.msg('Trancada pelo outro lado.'); }

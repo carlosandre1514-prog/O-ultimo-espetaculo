@@ -47,6 +47,13 @@
       r.setRenderTarget(oldRT); mesh.visible = true; MR.rendering = false; if (beam) beam.visible = bv;
     };
   };
+  // Pré-compila (na tela de carregamento) os materiais para a passada do reflexo: sem isto o
+  // primeiro espelho visto travaria o jogo enquanto os shaders compilam.
+  MR.precompile = function (camera) {
+    const r = MR.renderer, old = r.getRenderTarget(); OE.Sectors.update(camera, true);
+    MR.cam.position.copy(camera.position); MR.cam.quaternion.copy(camera.quaternion); MR.cam.projectionMatrix.copy(camera.projectionMatrix); MR.cam.updateMatrixWorld();
+    r.setRenderTarget(MR.rt); r.render(MR.scene, MR.cam); r.setRenderTarget(old); OE.Sectors.update(camera);
+  };
   // escolhe o espelho ativo (perto, à frente, de frente para a câmera)
   MR.update = function (camera) {
     if (!MR.mesh) return; let best = null, bs = 1e9; const c = camera.position, fx = -Math.sin(OE.game.player.yaw), fz = -Math.cos(OE.game.player.yaw);

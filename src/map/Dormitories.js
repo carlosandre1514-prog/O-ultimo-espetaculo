@@ -54,7 +54,7 @@
           P.poster(b, -71.87, 1.6, zc - 1.5, Math.PI / 2, seed + 1, 0.55); P.poster(b, -71.87, 1.6, zc + 1.7, Math.PI / 2, seed + 4, 0.45);
         };
         dorm(-40.5, -32, 0, false); dorm(-49, -40.5, 1, true); dorm(-57.5, -49, 2, false); dorm(-66, -57.5, 3, false);
-        new OE.Note({ x: -66, y: 0.3, z: -45, title: 'Diário (página arrancada)', text: '13 de março.\nO Beppo trancou o camarim 2 e deu a chave para o Tonho guardar no criado-mudo. Diz que lá embaixo, no subsolo, ele "guarda o público".\nHoje sumiram mais dois do pessoal da montagem.\nAmanhã é o último espetáculo. Eu vou embora antes.' });
+        new OE.Note({ x: -66, y: 0.3, z: -45, title: 'Diário (página arrancada)', text: '13 de março.\nO Mestre trancou o camarim 2 e mandou o Tonho guardar a chave no criado-mudo. Diz que lá embaixo, no subsolo, ele "guarda o público".\nHoje sumiram mais dois do pessoal da montagem. À noite ouvi crianças rindo no parque fechado.\nAmanhã é o último espetáculo. Eu vou embora antes.' });
         // banheiro coletivo
         for (let i = 0; i < 4; i++) H.stall(b, -51.9 + i * 1.05, -37.25, 0, { w: 1.0, d: 1.4, mat: M.metalGreen });
         for (let i = 0; i < 3; i++) P.sink(b, -39.6 - i * 1.2, -32.6, Math.PI);

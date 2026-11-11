@@ -81,6 +81,21 @@ body.touch.hint #stickZone b{opacity:1}
 body.touch #prompt{top:auto;left:auto;right:calc(18px + env(safe-area-inset-right));bottom:calc(112px + 3*70px - 120px);transform:none;max-width:46vw}
 #inv{top:calc(66px + env(safe-area-inset-top))}
 body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));margin-left:0;width:26%}
+#obj{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:6;color:#c8b088;font:13px Georgia,serif;letter-spacing:.5px;text-shadow:0 0 6px #000;pointer-events:none;max-width:60vw;text-align:center}
+#obj:before{content:"◆ ";color:#a02020}#obj:empty{display:none}
+#obj.flash{animation:objf 2.4s}@keyframes objf{0%{color:#fff0c0;transform:translateX(-50%) scale(1.15)}100%{transform:translateX(-50%) scale(1)}}
+#intro{position:absolute;inset:0;z-index:16;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:30px}
+#intro.on{display:flex}#introL{color:#d8c8a0;font:italic 20px Georgia,serif;max-width:80%;text-align:center;transition:opacity .6s;opacity:0}#intro small{color:#4a3a2a;letter-spacing:2px}
+#keypad{position:absolute;inset:0;z-index:17;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7)}
+#keypad.on{display:flex}.kp{background:#1a1612;border:2px solid #4a3a2a;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 30px #000}
+#kpDisp{background:#0a1a0a;color:#6aff8a;font:26px monospace;text-align:center;padding:8px;letter-spacing:4px}#kpDisp.err{color:#ff4a3a}
+.kp .keys{display:grid;grid-template-columns:repeat(3,58px);gap:8px}.kp button{height:50px;background:#2a241e;border:1px solid #5a4a3a;color:#e8d8b0;font:20px Georgia,serif}
+#journal{display:flex;flex-direction:column;gap:6px;align-items:stretch;max-height:46vh;overflow-y:auto;min-width:280px;max-width:86vw}
+#journal h4{margin:0;color:#8a7a60;font-weight:normal;text-align:center}#journal button{background:rgba(40,28,20,.7);border:1px solid #4a3a2a;color:#e8d8b0;font:14px Georgia,serif;padding:8px;text-align:left}
+#journal span{color:#4a3a2a;padding:4px 8px}
+#ending{position:absolute;inset:0;z-index:18;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:#000;text-align:center;padding:0 10%}
+#ending.on{display:flex}#ending h2{margin:0;font:28px Georgia,serif;letter-spacing:3px;color:#c8a860}#ending.bad h2{color:#c02020}#ending p{color:#b8a888;white-space:pre-wrap;font:16px/1.5 Georgia,serif}
+#ending button.big,#pause button.big{background:none;border:1px solid #7a2020;color:#e8c890;font:15px Georgia,serif;padding:10px 30px;letter-spacing:2px}
 #pause{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(0,0,0,.78);z-index:15}
 #pause.on{display:flex}#pause h3{margin:0;color:#c8a860;letter-spacing:3px;font-weight:normal}
 #pause button.big{background:none;border:1px solid #7a2020;color:#e8c890;font:15px Georgia,serif;padding:10px 30px;letter-spacing:2px}
@@ -94,6 +109,7 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
 <div id="cross"></div>
 <div id="prompt"></div>
 <div id="msg"></div>
+<div id="obj"></div>
 <div id="inv"></div>
 <div id="stamW"><div id="stam"></div></div>
 <div id="blood"></div>
@@ -109,7 +125,10 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
   <button id="bJump" data-act="jump" title="Pular">⤒<small>PULAR</small></button>
   <button id="bAct" data-act="interact" title="Interagir">✋</button>
 </div>
-<div id="pause"><h3>PAUSADO</h3><button class="big" id="resume">CONTINUAR</button><div id="gfx2"></div></div>
+<div id="pause"><h3>PAUSADO</h3><button class="big" id="resume">CONTINUAR</button><div id="journal"></div><div id="gfx2"></div></div>
+<div id="intro"><p id="introL"></p><small>toque para pular</small></div>
+<div id="keypad"><div class="kp"><div id="kpDisp">_ _ _ _</div><div class="keys"><button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="<">⌫</button><button data-k="0">0</button><button data-k="x">✕</button></div></div></div>
+<div id="ending"><h2 id="endT"></h2><p id="endB"></p><button class="big" onclick="location.reload()">JOGAR DE NOVO</button></div>
 <div id="splash">
   <h2>Gran Circo Estrela · 1987</h2>
   <h1>O Último Espetáculo</h1>
@@ -150,6 +169,8 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
 <script src="src/map/AnimalArea.js"></script>
 <script src="src/map/AbandonedPark.js"></script>
 <script src="src/map/Underground.js"></script>
+<script src="src/story.js"></script>
+<script src="src/director.js"></script>
 <script src="src/game.js"></script>
 </body>
 </html>

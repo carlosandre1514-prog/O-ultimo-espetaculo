@@ -178,7 +178,10 @@
         [[-3.5, 1.5], [3.2, 2.4], [0.5, -3.6]].forEach(([x, z], i) => { b.cyl(i % 2 ? M.metalBlue : M.metalRed, x, 0, z, 0.55, 0.65, 0.7, 14, { col: true }); b.cyl(M.metalYellow, x, 0.7, z, 0.58, 0.58, 0.05, 14, { lod: 'detail' }); });
         b.cyl(M.metalRed, -3.6, 0.7, 1.5, 0.4, 0.4, 0.05, 14, { rx: 0.4, lod: 'detail' });
         // cadeira solitária com a caixinha de música, virada para a cortina
-        P.chair(b, 0, 0.5, Math.PI); new OE.MusicBox({ x: 0, y: 0.48, z: 0.5 }); b.box(M.woodRed, 0, 0.48, 0.5, 0.18, 0.12, 0.14, { col: false, lod: 'clutter' });
+        P.chair(b, 0, 0.5, Math.PI); new OE.MusicBox({ x: 0, y: 0.48, z: 0.5 });
+        OE.Story.place('programa', 1.6, 0.02, 9.8, 0.7);
+        // final: quebrar a caixinha original no picadeiro
+        OE.Interact.add({ pos: new THREE.Vector3(0, 0.9, 1.6), radius: 2.4, label: () => (OE.Story.ringReady() ? 'Quebrar a caixinha original no picadeiro' : null), use: () => OE.Story.breakBox() }); b.box(M.woodRed, 0, 0.48, 0.5, 0.18, 0.12, 0.14, { col: false, lod: 'clutter' });
         // canhão humano tombado
         { const l = P.L(b, 4.2, -1.6, 0.6); l.cyl(M.metalRed, 0, 0.9, 0, 0.45, 0.55, 3.4, 14, { rz: 1.2 }); l.cyl(M.metalYellow, 1.55, 1.55, 0, 0.5, 0.5, 0.15, 14, { rz: 1.2, lod: 'detail' });
           [-1, 1].forEach(k => l.cyl(M.woodDark, -0.3, 0.6, k * 0.65, 0.6, 0.6, 0.1, 16, { rx: Math.PI / 2 })); l.col(0, 0, 0, 3.2, 1.6, 1.4, 'prop'); }

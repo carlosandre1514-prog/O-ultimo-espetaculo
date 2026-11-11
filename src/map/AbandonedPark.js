@@ -8,7 +8,7 @@
   const HORSE = [[-0.75, 0.0], [-0.55, 0.05], [-0.45, 0.35], [0.3, 0.35], [0.45, 0.05], [0.6, 0.0], [0.62, 0.1], [0.5, 0.45], [0.55, 0.7], [0.75, 0.95], [0.85, 0.85], [0.95, 0.9], [0.8, 1.1], [0.6, 1.05], [0.35, 0.7], [-0.45, 0.72], [-0.7, 0.85], [-0.8, 0.6], [-0.62, 0.45]];
   OE.Map.AbandonedPark = function () {
     OE.Sectors.define({
-      name: 'Parque', label: 'Setor G · parque abandonado', bounds: [-125, -30, -30, 98], priority: 0,
+      name: 'Parque', label: 'Setor G · parque abandonado', bounds: [-125, -45, -30, 98], priority: 0,
       build(b, def) {
         const M = OE.MAT, A = OE.Arch, P = OE.Props, H = OE.Hiding, Map = OE.Map, r = b.r, D = OE.DEG;
         // ---------------- roda-gigante ----------------
@@ -54,7 +54,7 @@
           b.geo(M.woodCream, horse, x, 1.0 + (i % 3) * 0.25, z, { yaw, scale: [1.4, 1.4, 1.2], tint: [[1, 0.9, 0.85], [0.6, 0.6, 0.65], [0.9, 0.75, 0.6]][i % 3] });
           b.box(M.woodRed, x, 1.75 + (i % 3) * 0.25, z, 0.35, 0.06, 0.3, { yaw, col: false, lod: 'clutter' });
         }
-        P.bulbString(b, [CX + CR + 0.6, 4.3, CZ], [CX, 4.3, CZ + CR + 0.6], 0.3, 8, {}); P.bulbString(b, [CX - CR - 0.6, 4.3, CZ], [CX, 4.3, CZ - CR - 0.6], 0.3, 8, {});
+        P.bulbString(b, [CX + CR + 0.6, 4.3, CZ], [CX, 4.3, CZ + CR + 0.6], 0.3, 8, { live: 1, group: 'carrossel', needsPower: true }); P.bulbString(b, [CX - CR - 0.6, 4.3, CZ], [CX, 4.3, CZ - CR - 0.6], 0.3, 8, { live: 1, group: 'carrossel', needsPower: true });
         H.behind('equipment', CX - 1.95, CZ + 0.1, -Math.PI / 2, 0.45, { crouch: true, side: 0, cat: 'aberto', exposure: 0.4 }).entry = { x: CX - 3.2, z: CZ + 0.8 }; H.spots[H.spots.length - 1].pos.set(CX - 3.2, 1.45, CZ + 0.8);
         // ---------------- barracas ----------------
         const stalls = [[-42, 60, 0.35, 0x8e1f1c, 'TIRO AO ALVO'], [-50, 64, 0.3, 0x28406a, 'ARGOLAS'], [-58, 67, 0.15, 0x3e5a40, 'PIPOCA'], [-74, 71, -0.05, 0x8e1f1c, 'ALGODÃO DOCE'], [-82, 71, -0.1, 0x5a2a6a, 'PESCARIA'], [-90, 70, -0.2, 0x28406a, 'LANCHES']];
@@ -98,10 +98,28 @@
         // trilho e carrinhos, bonecos
         A.path(b, [[TX - 5, TZ + 8], [TX - 5, TZ - 4], [TX + 5, TZ - 4], [TX + 5, TZ + 8]], 0.9, M.iron);
         [[TX - 5, TZ + 7.5], [TX + 5, TZ + 1]].forEach(([x, z]) => { const l = P.L(b, x, z, 0); l.geo(M.metalRed, OE.G.extrude('ghostcar', [[-0.8, 0.1], [0.8, 0.1], [0.9, 0.8], [0.4, 0.8], [0.3, 0.5], [-0.7, 0.5], [-0.9, 1.2]], 1.0, 0.05), 0, 0, 0, { yaw: Math.PI / 2 }); l.col(0, 0, 0, 1.0, 1.0, 1.8, 'prop'); });
-        P.mannequin(b, TX - 6.2, TZ - 1, 1.2, { ruff: true, tint: 0xd0c8b0 }); P.mannequin(b, TX + 6.3, TZ - 5.2, -0.6, { headless: true, tint: 0x3a0a0a }); P.mannequin(b, TX - 1, TZ + 1, 0, { ruff: true });
+        OE.Director.addMannequin(TX - 6.2, 0, TZ - 1, 1.2, 0xd0c8b0, true); OE.Story.place('fita2', TX + 2.5, 0.02, TZ - 4.5, 1.1); P.mannequin(b, TX + 6.3, TZ - 5.2, -0.6, { headless: true, tint: 0x3a0a0a }); P.mannequin(b, TX - 1, TZ + 1, 0, { ruff: true });
         H.behind('curtain', TX - 6.3, TZ - 4.5, Math.PI / 2, 0, { side: 0, exposure: 0.35 }).entry = { x: TX - 5, z: TZ - 3 }; H.spots[H.spots.length - 1].pos.set(TX - 5, 1, TZ - 3);
         P.emergency(b, TX, 2.8, TZ - 5.85, 0, { mode: 'strobe' }); P.emergency(b, TX - 6.85, 2.8, TZ + 1, Math.PI / 2, { mode: 'pulse' });
         P.bottles(b, TX + 5, TZ - 2, 0);
+        // ---------------- Casa dos Espelhos (labirinto em serpentina, paredes espelhadas) ----------------
+        { const y0 = 0, X0 = -110, X1 = -96;
+          A.plan(b, { y: 0, h: 3.0, ext: M.woodRed, extTint: [0.8, 0.7, 0.75], wall: M.mirror, floor: M.checker, ceil: M.velvet,
+            rooms: [{ id: 'r1', r: [X0, -36, X1, -34] }, { id: 'r2', r: [X0, -38.5, X1, -36] }, { id: 'r3', r: [X0, -41, X1, -38.5] }, { id: 'r4', r: [X0, -44, X1, -41] }],
+            open: [{ x: -97.5, z: -36, w: 1.6, h: 2.6 }, { x: -108.5, z: -38.5, w: 1.6, h: 2.6 }, { x: -97.5, z: -41, w: 1.6, h: 2.6 }],
+            doors: [{ x: -108.5, z: -34, w: 1.2, door: { name: 'porta da Casa dos Espelhos' }, sign: 0, signSide: 1 }] });
+          A.roofFlat(b, X0, -44, X1, -34, 3.0, M.woodRed);
+          b.box(M.woodRed, -103, 3.0, -33.75, 9, 1.6, 0.2, { col: false }); P.sign(b, -103, 3.8, -33.62, 0, 0, 6);
+          OE.Quad && 0; P.poster(b, -99, 1.6, -33.74, 0, 4, 1.2);
+          // espelhos registrados nas paredes longas (um reflexo ativo por vez: o mais próximo)
+          [-36, -38.5, -41].forEach(zw => [-1, 1].forEach(s => { for (let x = X0 + 2.5; x < X1 - 1; x += 3.5) OE.Mirrors.add({ x, y: 1.35, z: zw + s * 0.12, w: 3.0, h: 2.4, yaw: s > 0 ? 0 : Math.PI }); }));
+          for (let k = 0; k < 6; k++) P.ceilingLamp(b, X0 + 1.5 + k * 2.3, 3.0, -35 - (k % 4) * 2.5, { mode: k % 2 ? 'flicker' : 'off', intensity: 0.7, range: 6, shade: M.metalRed });
+          OE.Director.addMannequin(-108.6, 0, -42.6, 0.6, 0x9a2020, true); OE.Director.addMannequin(-97.4, 0, -37.2, -1.2, 0xd0c8b0, true);
+          OE.Story.place('foto', -109.2, 0.02, -43.3, 0.4); P.chair(b, -109.3, -42.6, 0.8, {});
+          H.behind('curtain', -96.6, -39.8, -Math.PI / 2, 0, { side: 0, exposure: 0.35 });
+          A.path(b, [[-103, -33], [-90, -26], [-74, -20], [-60, -12]], 2.4, M.dirt);
+          [-35, -37.2, -39.7, -42.5].forEach(z => [-107, -103, -99].forEach(x => Map.cand(x, 0, z)));
+        }
         // ---------------- equipamentos urbanos ----------------
         [[-48, 52], [-70, 62], [-88, 60], [-60, 25], [-73, 24], [-46, 22], [-100, 48], [-108, 20], [-52, -14]].forEach(([x, z], i) => P.lampPost(b, x, z, { mode: i % 3 === 0 ? 'flicker' : 'steady', broken: i % 3 === 1, intensity: 1.2, lean: i === 5 ? 0.15 : 0, needsPower: i % 3 === 2, group: 'parque' }));
         [[-45, 46, 2.4], [-66, 60, 0.2], [-84, 52, 1.6], [-56, 22, -0.5], [-74, 0, 0.6]].forEach(([x, z, y]) => P.bench(b, x, z, y, { park: true }));

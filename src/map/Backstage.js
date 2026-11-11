@@ -74,7 +74,8 @@
         P.wallLamp(b, -4.15, 2.0, -45, -Math.PI / 2, { mode: 'dying', intensity: 0.7 });
         b.box(M.woodDark, -9.85, 1.2, -41, 0.04, 0.9, 1.4, { col: false }); // quadro de avisos
         for (let i = 0; i < 5; i++) b.box(M.paint, -9.82, 1.3 + (i % 2) * 0.35, -41.5 + i * 0.25, 0.01, 0.28, 0.21, { col: false, lod: 'clutter', tint: [0.8, 0.78, 0.68], yaw: 0, rx: (r() - 0.5) * 0.2 });
-        new OE.Note({ x: -9.6, y: 1.4, z: -41, title: 'Memorando — Direção', text: 'A partir de hoje está PROIBIDO descer ao subsolo sem autorização.\nO Sr. Moretti guarda a chave do subsolo no camarim 2.\nQuem ouvir a caixinha de música durante o ensaio: NÃO responda.\n— A Direção, 1987' });
+        new OE.Note({ x: -9.6, y: 1.4, z: -41, title: 'Memorando — Direção', text: 'A partir de hoje está PROIBIDO descer ao subsolo sem autorização do proprietário.\nA chave do subsolo fica no camarim 2, com o Mestre de Cerimônias.\nQuem ouvir a caixinha de música durante o ensaio: NÃO responda.\n— A Direção, 1987' });
+        OE.Story.place('contrato', -6.7, 0.77, -40.2, 0.3);
         // ---- saguão ----
         P.rug(b, 0, -43, 0, 3, 6, 0x5a1818); P.bench(b, -3.4, -41, Math.PI / 2, { w: 1.8 }); P.bench(b, 3.4, -45, -Math.PI / 2, { w: 1.8 });
         P.ceilingLamp(b, 0, HGT, -43, { mode: 'flicker', intensity: 1.1, shade: M.metalRed });
@@ -87,7 +88,7 @@
         // ---- depósito de figurinos ----
         P.clothesRack(b, 12, -40.5, 0, { w: 2.4 }); P.clothesRack(b, 12, -43.2, 0, { w: 2.4 }); P.clothesRack(b, 15.5, -45.8, Math.PI / 2, { w: 2.0 });
         H.wardrobe(b, 16.4, -40, -Math.PI / 2, { w: 1.2 }); H.trunk(b, 11.5, -47.2, 0);
-        P.mannequin(b, 16.3, -44.8, 2.5, { tint: 0x2a3a6a }); Map.cand(17.6, 0, -44.5); P.cardboardPile(b, 10.6, -38.6, 3);
+        OE.Director.addMannequin(16.3, 0, -44.8, 2.5, 0x2a3a6a, true); Map.cand(17.6, 0, -44.5); P.cardboardPile(b, 10.6, -38.6, 3);
         b.box(M.fabric, 13.2, 0, -46, 1.2, 0.35, 0.9, { tint: 0x7a2a5a, rz: 0.05, lod: 'detail' }); // monte de tecidos
         P.ceilingLamp(b, 13.5, HGT, -43, { mode: 'dying', intensity: 0.8 });
         // ---- escada do subsolo (poço com guarda-corpo) ----
@@ -100,7 +101,7 @@
         P.clothesRack(b, -21.3, -56, Math.PI / 2, { w: 2.0 }); H.wardrobe(b, -12.6, -58, -Math.PI / 2, { w: 1.1 });
         P.suitcase(b, -16, -52, 0.3, { open: true }); P.rug(b, -17, -57, 0.1, 3.5, 2.5, 0x4a2840);
         P.mannequin(b, -13.5, -52, -0.4, { ruff: true, tint: 0xc8c0a0 });
-        new OE.Note({ x: -18.9, y: 0.8, z: -63.2, title: 'Bilhete preso no espelho', text: 'Lúcia,\nO Beppo não está bem. Ele ensaia sozinho com a cara pintada até de madrugada e fala com o público da plateia vazia.\nSe você ouvir a caixinha, se esconda e NÃO acenda a lanterna.\n— M.' });
+        new OE.Note({ x: -18.9, y: 0.8, z: -63.2, title: 'Bilhete preso no espelho', text: 'Lúcia,\nO Mestre não está bem. Ensaia sozinho de madrugada e faz reverências para a plateia vazia.\nDiz que encontrou um jeito de a noite nunca acabar.\nSe você ouvir a caixinha, se esconda e NÃO acenda a lanterna.\n— M.' });
         // ---- camarim 2 (trancado; guarda a Chave do Subsolo) ----
         P.vanity(b, -9, -63.5, 0, { lit: true, mode: 'dying', drawerItem: 'chave_subsolo' }); P.vanity(b, -5.4, -63.5, 0, {});
         H.wardrobe(b, -2.6, -53, -Math.PI / 2, { w: 1.1 }); P.bed(b, -10.8, -55, 0, { w: 0.9, d: 1.9 }); H.under('bed', -10.8, -55, Math.PI / 2, 0, 0.35, { depth: 0.45 });

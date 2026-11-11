@@ -36,7 +36,7 @@
     async load(progress) {
       progress(0.02, 'Pintando texturas');
       await frame(); OE.buildMaterials(this.renderer);
-      OE.Lights.init(this.scene, this.camera); OE.Mirrors.init(this.scene, this.renderer);
+      OE.Lights.init(this.scene, this.camera); OE.Mirrors.init(this.scene, this.renderer); OE.Director.init(this.scene);
       progress(0.1, 'Construindo o complexo');
       OE.Map.define();
       await OE.Sectors.buildAll(this.scene, this.world, async (k, name) => { progress(0.1 + k * 0.7, 'Construindo: ' + name); await frame(); });
@@ -57,18 +57,19 @@
       OE.on('spectator', on => UI.msg(on ? 'Modo espectador (V para voltar)' : 'De volta ao corpo', 2));
       OE.Sectors.update(this.camera);
       this.renderer.compile(this.scene, this.camera);
+      progress(0.98, 'Polindo os espelhos'); await frame(); OE.Mirrors.precompile(this.camera);
       progress(1, 'Pronto');
     }
     start() {
       this.running = true; OE.Audio.init(); if (OE.Audio.ctx && OE.Audio.ctx.state !== 'running') OE.Audio.ctx.resume();
       this.last = performance.now(); requestAnimationFrame(t => this.loop(t));
-      UI.msg('O portão está acorrentado. Procure outro caminho para entrar.', 5);
+      this.paused = true; OE.Audio.theme(0.22); OE.Story.intro(() => { this.paused = false; OE.Story.start(); });
     }
     async setCharacter(id) {
       try { const c = await OE.Models.loadCharacter(id); if (c) { OE.Avatar.set(c.obj, c.mixer, c.actions); this.character = c.info; } } catch (e) { console.warn('personagem', e); }
     }
     setPause(on) {
-      this.paused = on; $('pause').classList.toggle('on', on);
+      this.paused = on; $('pause').classList.toggle('on', on); if (on) OE.Story.renderJournal();
       if (on && document.pointerLockElement) document.exitPointerLock();
     }
     setCheckpoint(cp, silent) { if (this.checkpoint === cp) return; this.checkpoint = cp; if (!silent) UI.msg('Checkpoint: ' + cp.name, 2.5); }
@@ -137,7 +138,7 @@
         const a = Math.atan2(-(E.pos.x - P.pos.x), -(E.pos.z - P.pos.z)); let d = a - P.yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
         P.yaw += d * Math.min(1, dt * 6); P.pitch += (0.12 - P.pitch) * Math.min(1, dt * 4); P.updateCamera(dt);
         UI.fade(OE.clamp((this.deathT - 0.8) / 0.8, 0, 1));
-        if (this.deathT > 1.0 && !this.deathMsg) { this.deathMsg = true; UI.msg('Ele te encontrou.', 2.5); }
+        if (this.deathT > 1.0 && !this.deathMsg) { this.deathMsg = true; UI.msg('O Mestre de Cerimônias te encontrou.', 2.5); }
         if (this.deathT > 2.8) { this.deathMsg = false; this.respawn(); }
       } else {
         if (OE.Hiding.active || OE.Hiding.seq) { if (I.pressed('spectator')) { P.spectator = !P.spectator; P.spec.copy(this.camera.position); } if (P.spectator) P._spectate(dt, I); else OE.Hiding.update(dt, I); }
@@ -148,6 +149,7 @@
       for (const u of this.updatables) u.update(dt, P);
       for (const t of OE.noiseTraps) t.update(dt, P);
       if (this.enemy && !this.dying && !this.enemyOff) this.enemy.update(dt);
+      OE.Story.update(dt, P); OE.Director.update(dt, this);
       OE.Lights.update(dt, this.camera, P.spectator ? this.camera.position : P.pos);
       P.flashOn = this.flashOn; OE.Lights.updateTorch(dt, P); OE.Avatar.update(dt, P); OE.Mirrors.update(this.camera);
       OE.Sectors.update(this.camera, this.mapView);

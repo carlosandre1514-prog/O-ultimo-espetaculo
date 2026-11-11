@@ -71,7 +71,7 @@
   Map.finalize = function () {
     const w = OE.world;
     // grade externa (só onde não há construção)
-    const inside = (x, z) => [[-23, -65, 23, -37], [-73, -67, -37, -31], [37, -71, 79, -31], [54, 7, 96, 37], [87, -19, 101, -5]].some(r => x > r[0] && x < r[2] && z > r[1] && z < r[3]) || Math.hypot(x, z) < 31;
+    const inside = (x, z) => [[-23, -65, 23, -37], [-73, -67, -37, -31], [37, -71, 79, -31], [54, 7, 96, 37], [87, -19, 101, -5], [-111, -45, -95, -33]].some(r => x > r[0] && x < r[2] && z > r[1] && z < r[3]) || Math.hypot(x, z) < 31;
     for (let x = -120; x <= 100; x += 7) for (let z = -76; z <= 96; z += 7) if (!inside(x, z)) Map.cand(x, 0, z);
     // anel em volta da tenda
     for (let a = 0; a < 24; a++) Map.cand(Math.cos(a / 24 * 6.283) * 33.5, 0, Math.sin(a / 24 * 6.283) * 33.5);
