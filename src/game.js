@@ -136,6 +136,7 @@
     OE.Input.init($('cv'));
     const g = new Game(), bar = $('bar'), st = $('loadSt');
     try {
+      if (window.OE_ASSETS_READY) { st.textContent = 'Baixando modelos'; await window.OE_ASSETS_READY; }
       await g.load(async (k, s) => { bar.style.transform = 'scaleX(' + k + ')'; st.textContent = s; });
       $('start').classList.add('on'); st.textContent = 'Toque para entrar';
       OE.ready = true;

@@ -52,6 +52,14 @@ escadas com corrimão, guarda-corpos, treliças, cercas de tela com arame farpad
 (ferrugem, tinta descascando, umidade subindo das paredes, rachaduras, lona com buracos) e em geometria
 (tábuas soltas, cacos, entulho, lonas sobre objetos, mato).
 
+### Brinquedos do parque (modelados no MiniBlender)
+`tools/build_rides_miniblender.mjs` abre o MiniBlender (repositório irmão) num navegador automatizado e modela cada
+brinquedo pela API dele (primitivas, modificadores Array e Mirror, materiais), exporta GLB e anota colisores e
+esconderijos. `tools/optimize_models.cjs` junta cada brinquedo numa malha só com textura-paleta (1 draw call) e o jogo
+aplica ferrugem e sujeira no shader. Brinquedos: **montanha-russa** (trem parado na subida, trilho arrancado,
+carrinho descarrilado), **barco viking**, **chapéu mexicano**, **xícaras malucas**, **torre de queda** (30 m),
+**trenzinho infantil** e **tobogã gigante** — além de roda-gigante, carrossel, bate-bate e Trem Fantasma.
+
 ## Sistemas
 
 | Sistema | Arquivo |
