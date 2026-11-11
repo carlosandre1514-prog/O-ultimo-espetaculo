@@ -84,6 +84,14 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
 #obj{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:6;color:#c8b088;font:13px Georgia,serif;letter-spacing:.5px;text-shadow:0 0 6px #000;pointer-events:none;max-width:60vw;text-align:center}
 #obj:before{content:"◆ ";color:#a02020}#obj:empty{display:none}
 #obj.flash{animation:objf 2.4s}@keyframes objf{0%{color:#fff0c0;transform:translateX(-50%) scale(1.15)}100%{transform:translateX(-50%) scale(1)}}
+#cine{position:absolute;inset:0;z-index:16;display:none;pointer-events:none}#cine.on{display:block}
+#cine .lb{position:absolute;left:0;right:0;height:11%;background:#000}#cine .lb.t{top:0}#cine .lb.b{bottom:0}
+#cineTitle{position:absolute;left:0;right:0;top:34%;text-align:center;opacity:0;transition:opacity 1.2s}#cineTitle.on{opacity:1}
+#cineTitle b{display:block;font:34px Georgia,serif;letter-spacing:6px;color:#d8b868;text-shadow:0 0 20px #6a0a0a}#cineTitle span{display:block;margin-top:8px;color:#a89878;font:italic 15px Georgia,serif}
+#cineSub{position:absolute;left:10%;right:10%;bottom:14%;text-align:center;color:#f0e6d0;font:18px Georgia,serif;text-shadow:0 0 6px #000,0 0 2px #000;opacity:0;transition:opacity .3s}
+#cineSub.on{opacity:1}#cineSub b{color:#e8b860;margin-right:8px}#cineSub b:after{content:":"}#cineSub i{color:#c8b898}
+#cineLoad{position:absolute;left:0;right:0;top:48%;text-align:center;color:#8a7a60;font:italic 14px Georgia,serif}
+#cineSkip{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:3%;pointer-events:auto;background:none;border:1px solid rgba(220,200,160,.35);color:#c8b898;font:12px Georgia,serif;letter-spacing:2px;padding:8px 14px;z-index:2}
 #intro{position:absolute;inset:0;z-index:16;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:30px}
 #intro.on{display:flex}#introL{color:#d8c8a0;font:italic 20px Georgia,serif;max-width:80%;text-align:center;transition:opacity .6s;opacity:0}#intro small{color:#4a3a2a;letter-spacing:2px}
 #keypad{position:absolute;inset:0;z-index:17;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7)}
@@ -126,6 +134,7 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
   <button id="bAct" data-act="interact" title="Interagir">✋</button>
 </div>
 <div id="pause"><h3>PAUSADO</h3><button class="big" id="resume">CONTINUAR</button><div id="journal"></div><div id="gfx2"></div></div>
+<div id="cine"><div class="lb t"></div><div class="lb b"></div><div id="cineTitle"></div><div id="cineSub"></div><div id="cineLoad"></div><button id="cineSkip">PULAR ▸</button></div>
 <div id="intro"><p id="introL"></p><small>toque para pular</small></div>
 <div id="keypad"><div class="kp"><div id="kpDisp">_ _ _ _</div><div class="keys"><button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="<">⌫</button><button data-k="0">0</button><button data-k="x">✕</button></div></div></div>
 <div id="ending"><h2 id="endT"></h2><p id="endB"></p><button class="big" onclick="location.reload()">JOGAR DE NOVO</button></div>
@@ -170,6 +179,7 @@ body.touch #stamW{left:calc(18px + env(safe-area-inset-left));bottom:calc(14px +
 <script src="src/map/AbandonedPark.js"></script>
 <script src="src/map/Underground.js"></script>
 <script src="src/story.js"></script>
+<script src="src/cinematic.js"></script>
 <script src="src/director.js"></script>
 <script src="src/game.js"></script>
 </body>

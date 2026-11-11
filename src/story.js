@@ -82,9 +82,10 @@
     if (P.pos.y < -2 && !St.flags.under) { St.flags.under = true; St.setChapter(2, 'Explore o subsolo. Encontre os arquivos do circo'); }
     if (St.final) St.finalUpdate(dt, P);
   };
-  St.trap = function () {
+  St.trap = function (silent) {
     St.flags.trapped = true; const gates = OE.doors.filter(d => d.name === 'portão');
     gates.forEach(g => { g.lock = null; g.close('player-force'); g.target = 0; g.lock = 'sealed'; });
+    if (silent) return;
     OE.Audio.play('metal', { x: 0, y: 1, z: 100 }, 1.5); setTimeout(() => OE.Audio.play('laugh', { x: 0, y: 3, z: 40 }, 0.8), 1200);
     OE.UI.msg('O portão se fechou sozinho atrás de você.', 4); St.objective('Você está preso. Encontre outra saída');
   };
@@ -126,6 +127,12 @@
     e.classList.add('on'); let i = 0; const p = $('introL');
     const next = () => { if (i >= lines.length) { e.classList.remove('on'); done(); return; } p.style.opacity = 0; setTimeout(() => { p.textContent = lines[i++]; p.style.opacity = 1; setTimeout(next, 3200); }, 600); };
     e.onclick = () => { i = lines.length; next(); }; next();
+  };
+  // depois da cinemática: os amigos sumiram, o portão está lacrado
+  St.startAfterCine = function () {
+    St.found.add('carta'); St.renderJournal(); St.flags.trapped = true;
+    St.objective('Seus amigos sumiram. Encontre uma saída e descubra a verdade');
+    OE.UI.msg('Eles estavam aqui um segundo atrás.', 4);
   };
   St.start = function () {
     St.found.add('carta'); St.renderJournal();

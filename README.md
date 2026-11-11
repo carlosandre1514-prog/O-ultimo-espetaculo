@@ -66,6 +66,18 @@ aplica ferrugem e sujeira no shader. Brinquedos: **montanha-russa** (trem parado
 carrinho descarrilado), **barco viking**, **chapéu mexicano**, **xícaras malucas**, **torre de queda** (30 m),
 **trenzinho infantil** e **tobogã gigante** — além de roda-gigante, carrossel, bate-bate e Trem Fantasma.
 
+## História e cinemática
+- **Cinemática de abertura** (`src/cinematic.js`, ~45 s, no motor, com os 6 adolescentes): a estrada à noite, o grupo
+  chega, falas diante do portão aberto, a caixinha toca e uma silhueta de cartola aparece na praça, o protagonista
+  entra primeiro e o portão se fecha sozinho, os amigos batem nas grades, apagão com a risada do Mestre — quando a
+  luz volta, eles sumiram. A câmera entra nos olhos do protagonista e o jogo começa. Botão "PULAR".
+- **História** (`src/story.js`): capítulos, 9 documentos/gravações (diário no menu de pausa), painel com senha
+  (14/03), caixinha de música original na sala secreta, final no picadeiro com energia ligada e fuga pelo portão
+  — dois finais.
+- **Diretor de terror** (`src/director.js`): risadas, crianças, passos atrás, silhuetas que somem quando olhadas,
+  portas que se abrem sozinhas, luzes em rajada, brinquedos que ligam sozinhos, manequins que mudam de lugar e a
+  caixinha distorcida que anuncia o Mestre de Cerimônias quando ele está perto.
+
 ## Sistemas
 
 | Sistema | Arquivo |

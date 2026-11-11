@@ -63,7 +63,8 @@
     start() {
       this.running = true; OE.Audio.init(); if (OE.Audio.ctx && OE.Audio.ctx.state !== 'running') OE.Audio.ctx.resume();
       this.last = performance.now(); requestAnimationFrame(t => this.loop(t));
-      this.paused = true; OE.Audio.theme(0.22); OE.Story.intro(() => { this.paused = false; OE.Story.start(); });
+      // abertura: cinemática com os personagens (ou o texto, se os modelos não existirem)
+      OE.Cine.play(ok => { if (ok) { this.paused = false; OE.Story.startAfterCine(); } else { this.paused = true; OE.Audio.theme(0.22); OE.Story.intro(() => { this.paused = false; OE.Story.start(); }); } });
     }
     async setCharacter(id) {
       try { const c = await OE.Models.loadCharacter(id); if (c) { OE.Avatar.set(c.obj, c.mixer, c.actions); this.character = c.info; } } catch (e) { console.warn('personagem', e); }
@@ -127,6 +128,7 @@
     }
     update(dt) {
       const I = OE.Input, P = this.player; OE.state.time += dt;
+      if (this.cine && this.cine.active) { this.cine.update(dt); OE.Lights.update(dt, this.camera, this.camera.position); OE.Sectors.update(this.camera); OE.Audio.listener(this.camera); for (const d of OE.doors) d.update(dt); return; }
       if (I.pressed('light')) { this.flashOn = !this.flashOn; OE.Lights.setFlash(this.flashOn); OE.Audio.play('click', null, 0.4); }
       if (I.pressed('debug')) $('debug').classList.toggle('on');
       if (I.pressed('debugMap')) this.mapView = !this.mapView;
