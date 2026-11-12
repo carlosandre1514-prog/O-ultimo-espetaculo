@@ -4,6 +4,7 @@ import { serve, open } from './smoke.mjs';
 const out = process.argv[2], views = JSON.parse(process.argv[3]);
 const srv = await serve(8124); const { browser, page, errors } = await open(8124, +(process.env.W || 1280), +(process.env.H || 720));
 await page.evaluate(() => { OE.noPointerLock = true; document.getElementById('start').click(); OE.game.enemyOff = !window.ENEMY; });
+await page.waitForFunction(() => !(OE.game.cine && OE.game.cine.active) || OE.Cine.flash, null, { timeout: 60000 }); await page.waitForTimeout(500); await page.evaluate(() => { if (OE.Cine && OE.game.cine && OE.game.cine.active) OE.Cine.finish(); OE.game.enemyOff = !window.ENEMY; });
 for (const v of views) {
   await page.evaluate(v => {
     const G = OE.game, P = G.player; G.mapView = !!v.map; G.flashOn = !!v.flash; OE.Lights.setFlash(!!v.flash);

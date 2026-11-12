@@ -18,6 +18,7 @@
     L.moon = new THREE.DirectionalLight(0x9aaccc, 0.32); L.moon.position.set(-60, 90, 40); scene.add(L.moon); scene.add(L.moon.target);
     for (let i = 0; i < POOL; i++) { const p = new THREE.PointLight(0xffc890, 0, 12, 2); p.userData.em = null; p.userData.fade = 0; scene.add(p); L.pool.push(p); }
     L.flash = new THREE.SpotLight(0xfff1d8, 0, 26, 0.5, 0.55, 1.3); L.flash.position.set(0.18, -0.2, 0); L.flash.target.position.set(0, -0.15, -4);
+    if (OE.Q.shadow) { L.flash.castShadow = true; L.flash.shadow.mapSize.set(OE.Q.shadow, OE.Q.shadow); L.flash.shadow.camera.near = 0.25; L.flash.shadow.camera.far = 18; L.flash.shadow.bias = -0.0009; L.flash.shadow.normalBias = 0.02; }
     camera.add(L.flash); camera.add(L.flash.target);
     // feixe visível da lanterna: cone aditivo preso à câmera (some atrás das paredes pelo teste de profundidade)
     const BL = 11, BR = Math.tan(0.36) * BL, cg = new THREE.ConeGeometry(BR, BL, 28, 8, true);

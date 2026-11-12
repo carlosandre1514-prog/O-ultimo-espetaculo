@@ -46,7 +46,7 @@
     const c = m.characters.find(x => x.id === id) || m.characters[0]; if (!c) return null;
     const g = await loadGLTF(c.file), obj = fit(g.scene, c.height || 1.72);
     // malha com esqueleto em escala de centímetros: a esfera de culling fica errada -> não descartar
-    obj.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+    obj.traverse(o => { if (o.isMesh) { o.frustumCulled = false; if (OE.Q.shadow) o.castShadow = true; } });
     const mixer = new THREE.AnimationMixer(g.scene), actions = {};
     for (const [k, f] of Object.entries(m.teenAnims || {})) {
       try { if (!clipCache[k]) { const a = await loadGLTF(f); clipCache[k] = a.animations[0]; } if (clipCache[k]) actions[k] = mixer.clipAction(clipCache[k]); } catch (e) { console.warn('animação', k, e); }
@@ -58,7 +58,7 @@
     const m = await M.loadManifest(); if (!m || !m.enemy) return null;
     try {
       const g = await loadGLTF(m.enemy.file), obj = fit(g.scene, m.enemy.height || 2.05);
-      obj.traverse(o => { if (o.isSkinnedMesh) o.frustumCulled = false; });
+      obj.traverse(o => { if (o.isSkinnedMesh) o.frustumCulled = false; if (o.isMesh && OE.Q.shadow) o.castShadow = true; });
       const mixer = new THREE.AnimationMixer(g.scene), actions = {};
       g.animations.forEach(c => { actions[c.name.toLowerCase()] = mixer.clipAction(c); });
       for (const [k, f] of Object.entries(m.enemy.anims || {})) {

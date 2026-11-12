@@ -53,4 +53,34 @@ jobs:
           body: |
             APK gerado automaticamente a partir do branch `${{ github.ref_name }}` (commit ${{ github.sha }}).
             No celular: baixe o arquivo .apk abaixo, abra e permita "instalar apps desconhecidos" quando o Android pedir.
+            No PC (Windows): baixe o .zip "PC-Windows" (aparece alguns minutos depois), extraia e abra "O Ultimo Espetaculo.exe". F11 alterna tela cheia.
           files: saida/*.apk
+
+  # Versão PC (Windows 64 bits): Electron empacotado em .zip, anexado ao mesmo Release do APK
+  pc:
+    needs: apk
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Copiar o jogo
+        shell: bash
+        run: |
+          mkdir -p desktop/www
+          cp -r index.html icon.svg manifest.webmanifest src vendor assets desktop/www/
+          rm -f desktop/www/assets/models/meshy_tasks.json desktop/www/assets/models/brinquedos/rides.json
+          find desktop/www/assets -name tasks.json -delete
+      - name: Empacotar
+        working-directory: desktop
+        shell: bash
+        run: |
+          npm install --no-audit --no-fund
+          npx @electron/packager . "O Ultimo Espetaculo" --platform=win32 --arch=x64 --out=dist --overwrite --asar --app-version=1.0.${{ github.run_number }}
+          cd dist && 7z a -tzip "../O-Ultimo-Espetaculo-PC-Windows-v1.0.${{ github.run_number }}.zip" "O Ultimo Espetaculo-win32-x64" > /dev/null
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          files: desktop/*.zip

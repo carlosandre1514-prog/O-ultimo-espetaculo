@@ -9,7 +9,7 @@ export async function open(port, w = 1280, h = 720) {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: w, height: h } });
   const errors = []; page.on('pageerror', e => errors.push('pageerror: ' + e.message)); page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning' || /NAN/.test(m.text())) errors.push(m.type() + ': ' + m.text()); else if (process.env.V) console.log(m.text()); });
-  await page.goto(`http://localhost:${port}/index.html?debug`);
+  await page.goto(`http://localhost:${port}/index.html?debug${process.env.Q ? '&q=' + process.env.Q : ''}`);
   await page.waitForFunction(() => window.OE && (OE.ready || OE.loadError), null, { timeout: 240000 });
   return { browser, page, errors };
 }

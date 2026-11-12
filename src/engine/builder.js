@@ -121,6 +121,7 @@
         g.setIndex(b.n > 65535 ? new THREE.Uint32BufferAttribute(b.idx, 1) : new THREE.Uint16BufferAttribute(b.idx, 1));
         g.computeBoundingSphere();
         const m = new THREE.Mesh(g, b.mat); m.matrixAutoUpdate = false; m.updateMatrix(); m.userData.lod = b.lod; m.userData.layer = b.layer;
+        if (OE.Q.shadow && !b.mat.transparent && !b.mat.alphaTest) { m.castShadow = true; m.receiveShadow = true; }
         m.userData.lodDist = LOD_DIST[b.lod]; m.userData.center = g.boundingSphere.center.clone(); m.userData.radius = g.boundingSphere.radius;
         group.add(m); meshes.push(m);
       }

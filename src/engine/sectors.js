@@ -70,7 +70,8 @@
       // detalhe preguiçoso
       if (def.detail) {
         if (!def.detailLoaded && (d < LOAD || forceAll)) S.loadDetail(def);
-        else if (def.detailLoaded && d > UNLOAD && !forceAll) S.unloadDetail(def);
+        // (não descarrega mais: reconstruir a geometria ao voltar causava engasgo; a memória extra é pequena)
+        else if (def.detailLoaded && d > UNLOAD && !forceAll && S.unloadFar) S.unloadDetail(def);
       }
       const interiorOn = forceAll || !def.interiorRange || d < def.interiorRange;
       const list = def.detailMeshes ? def.meshes.concat(def.detailMeshes) : def.meshes;

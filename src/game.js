@@ -24,6 +24,7 @@
       this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, OE.Q.dpr));
       this.renderer.setSize(OE.view.w, OE.view.h);
       this.renderer.outputEncoding = THREE.sRGBEncoding; this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.15;
+      if (OE.Q.shadow) { this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFShadowMap; this.renderer.shadowMap.autoUpdate = false; }
       this.scene = OE.scene = new THREE.Scene();
       // a neblina apaga tudo além de ~90 m: o plano distante corta antes de desenhar
       this.camera = new THREE.PerspectiveCamera(70, OE.view.w / OE.view.h, 0.05, OE.Q.far); this.scene.add(this.camera);
@@ -36,7 +37,7 @@
     async load(progress) {
       progress(0.02, 'Pintando texturas');
       await frame(); OE.buildMaterials(this.renderer);
-      OE.Lights.init(this.scene, this.camera); OE.Mirrors.init(this.scene, this.renderer); OE.Director.init(this.scene);
+      OE.Lights.init(this.scene, this.camera); OE.Mirrors.init(this.scene, this.renderer); OE.Director.init(this.scene); OE.Sky.init(this.scene);
       progress(0.1, 'Construindo o complexo');
       OE.Map.define();
       await OE.Sectors.buildAll(this.scene, this.world, async (k, name) => { progress(0.1 + k * 0.7, 'Construindo: ' + name); await frame(); });
@@ -57,6 +58,9 @@
       OE.on('spectator', on => UI.msg(on ? 'Modo espectador (V para voltar)' : 'De volta ao corpo', 2));
       OE.Sectors.update(this.camera);
       this.renderer.compile(this.scene, this.camera);
+      // pré-aquecimento: passa a câmera (com lanterna e sombra) por todos os setores ainda na tela de carga,
+      // assim cada shader/variante de sombra compila agora e não trava o jogo na primeira visita
+      progress(0.96, 'Preparando a escuridão'); await frame(); await this.warmup(progress);
       progress(0.98, 'Polindo os espelhos'); await frame(); OE.Mirrors.precompile(this.camera);
       progress(1, 'Pronto');
     }
@@ -121,7 +125,7 @@
       requestAnimationFrame(tt => this.loop(tt));
       // FPS travado em 30 (opção): pula quadros, poupa bateria e esquenta menos
       if (OE.Q.fps === 30 && t - (this.lastDraw || 0) < 1000 / 31) return; this.lastDraw = t;
-      let dt = (t - this.last) / 1000; this.last = t; if (dt > 0.05) dt = 0.05;
+      let dt = (t - this.last) / 1000; this.last = t; if (dt > 0.05) dt = 0.05; this._rdt = dt;
       this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(dt, 1e-3)) * 0.05 : 60;
       if (!this.paused) this.update(dt);
       this.render();
@@ -161,14 +165,36 @@
       OE.Audio.listener(this.camera);
       $('stam').style.transform = 'scaleX(' + P.stamina.toFixed(3) + ')'; $('stamW').classList.toggle('on', P.stamina < 0.98);
     }
+    async warmup(progress) {
+      const C = this.camera, r = this.renderer, pts = [[0, 0, 128], [0, 0, 62], [0, 0, 20], [0, 9.5, 16], [0, 0, -49.2], [-54, 0, -50], [58, 0, -50], [75, 0, 22], [-62, 0, 25], [-103, 0, -39], [19.5, -4.5, -38]];
+      const pos = C.position.clone(), q = C.quaternion.clone(); OE.Lights.setFlash(true);
+      for (let i = 0; i < pts.length; i++) {
+        const [x, y, z] = pts[i]; C.position.set(x, y + 1.6, z);
+        for (let k = 0; k < 4; k++) {
+          C.rotation.set(0, k * Math.PI / 2, 0, 'YXZ'); C.updateMatrixWorld(true);
+          OE.Sectors.update(C); OE.Lights.update(0.25, C, C.position);
+          if (OE.Q.shadow) r.shadowMap.needsUpdate = true; r.render(this.scene, C);
+        }
+        progress(0.96 + 0.02 * (i + 1) / pts.length, 'Preparando a escuridão'); await frame();
+      }
+      OE.Lights.setFlash(false); C.position.copy(pos); C.quaternion.copy(q); C.updateMatrixWorld(true); OE.Sectors.update(C);
+    }
+    static grain() {
+      // granulado de filme: textura de ruído 128x128 gerada uma vez, deslocada só por CSS (composição na GPU)
+      const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), d = x.createImageData(128, 128);
+      for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255 | 0; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+      x.putImageData(d, 0, 0); const g = document.getElementById('grain'); if (g) g.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+      if (g && OE.Q.name === 'suave') g.style.display = 'none';
+    }
     render() {
       const r = this.renderer;
+      OE.Sky.update(this._rdt || 0.016, this.camera);
       if (this.mapView) {
         if (!this.mapCam) { this.mapCam = new THREE.OrthographicCamera(-130, 130, 110, -110, 1, 400); this.mapCam.position.set(-10, 200, 10); this.mapCam.lookAt(-10, 0, 10); }
         const a = innerWidth / innerHeight; this.mapCam.left = -120 * a; this.mapCam.right = 120 * a; this.mapCam.top = 120; this.mapCam.bottom = -120; this.mapCam.updateProjectionMatrix();
         const fog = this.scene.fog; this.scene.fog = null; const hi = OE.Lights.hemi.intensity; OE.Lights.hemi.intensity = 1.6;
         r.render(this.scene, this.mapCam); this.scene.fog = fog; OE.Lights.hemi.intensity = hi;
-      } else r.render(this.scene, this.camera);
+      } else { if (OE.Q.shadow) r.shadowMap.needsUpdate = OE.Lights.flash.intensity > 0.01; r.render(this.scene, this.camera); }
       if ($('debug').classList.contains('on')) {
         const i = r.info.render, P = this.player, E = this.enemy, sec = OE.Sectors.sectorAt(P.pos);
         $('debug').textContent = `FPS ${this.fps.toFixed(0)} · draw calls ${i.calls} · tri ${(i.triangles / 1000).toFixed(0)}k\n` +
@@ -200,7 +226,7 @@
     }));
     mark();
     $('gfx2').appendChild($('gfx').cloneNode(true)).id = 'gfx3'; document.querySelectorAll('#gfx3 button').forEach(b => b.addEventListener('click', () => { if (b.dataset.f) { OE.Q.fps = +b.dataset.f; OE.saveQuality(OE.Q.name, OE.Q.fps); document.querySelectorAll('#gfx3 button,#gfx button').forEach(x => x.classList.toggle('on', x.dataset.q === OE.Q.name || +x.dataset.f === OE.Q.fps)); } else if (b.dataset.q !== OE.Q.name) { OE.saveQuality(b.dataset.q, OE.Q.fps); location.reload(); } }));
-    const g = new Game(), bar = $('bar'), st = $('loadSt');
+    Game.grain(); const g = new Game(), bar = $('bar'), st = $('loadSt');
     try {
       if (window.OE_ASSETS_READY) { st.textContent = 'Baixando modelos'; await window.OE_ASSETS_READY; }
       await g.load(async (k, s) => { bar.style.transform = 'scaleX(' + k + ')'; st.textContent = s; });

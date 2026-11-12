@@ -21,7 +21,7 @@ const r = await page.evaluate(async () => {
   S.breakBox(); res.needsPowerFirst = !S.final;
   OE.state.items.add('fusivel'); const gen = OE.Interact.list.find(o => o instanceof OE.Generator); gen.use(); res.power = OE.state.power;
   S.breakBox(); res.finalStarted = !!S.final; res.gateReopens = OE.doors.filter(d => d.name === 'portão').every(d => !d.lock);
-  P.teleport(0, 0, 102.5, 0); for (let i = 0; i < 20 && !S.ended; i++) { G.update(1 / 30); await wait(50); } res.ending = document.getElementById('ending').classList.contains('good');
+  if (G.cine && G.cine.active) OE.Cine.finish(); P.teleport(0, 0, 102.5, 0); for (let i = 0; i < 20 && !S.ended; i++) { G.update(1 / 30); await wait(50); } res.ending = document.getElementById('ending').classList.contains('good'); res.dbg = { ended: S.ended, z: P.pos.z, cine: !!(G.cine && G.cine.active), paused: G.paused, dying: G.dying };
   res.journal = S.found.size + '/' + S.docs.size; return res;
 });
 console.log(JSON.stringify(r, null, 1));

@@ -12,6 +12,21 @@ A cada envio para o GitHub, o workflow **Gerar APK** (`.github/workflows/android
 "instalar apps desconhecidos". O app (`android/`) é uma casca nativa com WebView: abre direto na horizontal, em tela
 cheia, com o jogo inteiro embutido (funciona sem internet); o botão voltar pausa.
 
+## PC (Windows)
+O mesmo workflow gera também `O-Ultimo-Espetaculo-PC-Windows-vX.zip` (Electron, pasta `desktop/`) e anexa ao mesmo
+Release do APK. Extraia e abra `O Ultimo Espetaculo.exe` — tela cheia (F11 alterna), GPU dedicada preferida, o jogo é
+servido por um servidor local 127.0.0.1 (como o WebViewAssetLoader do Android), funciona sem internet.
+
+## Qualidade visual x desempenho (alvo: Android com 3 GB de RAM liso)
+- **Nível automático pela GPU real** (`WEBGL_debug_renderer_info`) + RAM + núcleos: Adreno 610+/Mali-G72+ → Padrão,
+  Adreno 730+/Mali-G710+/Xclipse com 8 GB → Alto, GPUs de entrada → Suave. Sempre pode trocar no menu.
+- **Sombras dinâmicas da lanterna** (Padrão 512, Alto 1024; Suave sem): só o cone da lanterna (18 m), mapa de sombra
+  atualizado uma vez por quadro e só com a lanterna acesa (o espelho não refaz a sombra).
+- **Céu noturno** num único shader (degradê que se funde à neblina, estrelas, lua com halo, nuvens passando).
+- **Granulado de filme + vinheta** por CSS (composição na GPU, custo ~zero; desligado no Suave).
+- **Sem engasgos:** o detalhe de cada setor é construído uma vez e mantido; na tela de carga a câmera passa por todos os
+  setores com lanterna e sombra ligadas para compilar todos os shaders antes do jogo começar.
+
 ## Rodar
 
 ```bash
